@@ -1,0 +1,11 @@
+Makefile.config
+version.txt
+*/__init__.py
+*.pyc
+MANIFEST
+*egg-info/
+build/
+dist/
+deb_dist/
+*.tar.gz
+files.txt

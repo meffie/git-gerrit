@@ -20,7 +20,14 @@ setup(
     url='https://github.com/meffie/git_gerrit',
     packages=['git_gerrit'],
     install_requires=[
+        'sh',
+        'pygerrit2',
     ],
+    entry_points = {
+        'console_scripts': [
+            'git-gerrit-query=git_gerrit.query:main',
+        ],
+    },
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',

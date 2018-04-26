@@ -26,6 +26,7 @@ setup(
     entry_points = {
         'console_scripts': [
             'git-gerrit-query=git_gerrit.query:main',
+            'git-gerrit-fetch=git_gerrit.fetch:main',
         ],
     },
     classifiers=[

@@ -7,22 +7,19 @@ The heavy lifting is done with the pygerrit2 package.
 
 Usage::
 
-    git gerrit-query <search terms>
+    git gerrit-query [--format=<string>] <search terms>
     git gerrit-fetch [--no-branch] [--checkout] <number>
 
 Installation
 ============
 
-The scripts can be installed with the makefile. If in the PATH, pip will
-be used for the installation, otherwise the setup.py will be used::
+The package can be installed with the makefile. pip will be used for the
+installation, if found, otherwise the setup.py will be used::
 
     make install
 
-
-Configuration
-=============
-
-Set the Gerrit host and project names in the local git configuration::
+Set the Gerrit host and project names in the local git configuration before
+running the git-gerrit commands::
 
     git config gerrit.host <gerrit-hostname>
     git config gerrit.project <gerrit-project>
@@ -46,24 +43,33 @@ Find open gerrits on the master branch::
 
 Find gerrits with subjects containing the term 'debuginfo'::
 
-    $git gerrit-query debuginfo limit:5
+    $ git gerrit-query debuginfo limit:5
     13030 redhat: Make separate debuginfo for kmods work with recent rpm
     13029 redhat: Create unique debuginfo packages for kmods
     12818 redhat: separate debuginfo package for kmod rpm
     12977 redhat: Create unique debuginfo packages for kmods
     12986 redhat: Create unique debuginfo packages for kmods
 
+Also show the branch name::
+
+    $ git gerrit-query '--format={branch:>20s} {_number} {subject}' debuginfo limit:5
+                  master 13030 redhat: Make separate debuginfo for kmods work with recent rpm
+    openafs-stable-1_6_x 13029 redhat: Create unique debuginfo packages for kmods
+    openafs-stable-1_6_x 12818 redhat: separate debuginfo package for kmod rpm
+                  master 12977 redhat: Create unique debuginfo packages for kmods
+    openafs-stable-1_8_x 12986 redhat: Create unique debuginfo packages for kmods
+
 Fetch a gerrit::
 
-    git gerrit-fetch 12977
+    $ git gerrit-fetch 12977
 
 Checkout a given gerrit::
 
-    git gerrit-fetch --checkout 13000
+    $ git gerrit-fetch --checkout 13000
 
 Cherry-pick a gerrit onto the current branch::
 
-    git gerrit-fetch --no-branch 13001 && git cherry-pick FETCH_HEAD
+    $ git gerrit-fetch --no-branch 13001 && git cherry-pick FETCH_HEAD
 
 See Also
 ========

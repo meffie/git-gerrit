@@ -50,12 +50,18 @@ def query(search, **options):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='query gerrit')
+    parser.add_argument('--format', help='output format string', default='{_number} {subject}')
     parser.add_argument('term', metavar='<term>', nargs='+', help='search term')
     args = parser.parse_args()
+    format = args.format
     search = ' '.join(args.term)
     try:
         for change in query(search):
-            print(change['_number'], change['subject'])
+            try:
+                print(format.format(**change))
+            except KeyError as ke:
+                print('Unknown --format parameter:', ke.message)
+                break
     except GerritConfigError as e:
         print("Error:", e.message)
 

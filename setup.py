@@ -27,6 +27,7 @@ setup(
         'console_scripts': [
             'git-gerrit-query=git_gerrit.query:main',
             'git-gerrit-fetch=git_gerrit.fetch:main',
+            'git-gerrit-log=git_gerrit.log:main',
         ],
     },
     classifiers=[

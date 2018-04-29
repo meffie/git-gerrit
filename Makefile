@@ -28,8 +28,8 @@ Makefile.config: Makefile
 	@echo "NAME=`python setup.py --name`"              >$@
 	@echo "PIP=`which pip || echo missing`"            >>$@
 	@echo "PYTHON=`which python || echo missing`"      >>$@
-	@echo "PYFLAKES=`which xpyflakes || echo missing`" >>$@
-	@if which pip; then \
+	@echo "PYFLAKES=`which pyflakes || echo missing`"  >>$@
+	@if which pip >/dev/null; then \
 		echo "MODE=pip" >>$@; \
 	else \
 		echo "MODE=setup" >>$@; \

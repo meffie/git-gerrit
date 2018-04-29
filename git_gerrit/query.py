@@ -42,21 +42,26 @@ def query(search, **options):
     if 'project:' not in search:
         search += ' project:{0}'.format(config['project'])
     params = [('q', search)]
+    if 'limit' in options:
+        if options['limit']:
+            params.append(('n', options['limit']))
     for option in options:
-        params.append(('o', option.upper()))
+        if options[option] is True:
+            params.append(('o', option.upper()))
     query = '/changes/?{0}'.format(urlencode(params))
     return gerrit.get(query)
 
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='query gerrit')
+    parser.add_argument('-n', '--number', help='limit the number of results', type=int)
     parser.add_argument('--format', help='output format string', default='{_number} {subject}')
     parser.add_argument('term', metavar='<term>', nargs='+', help='search term')
     args = parser.parse_args()
     format = args.format
     search = ' '.join(args.term)
     try:
-        for change in query(search):
+        for change in query(search, limit=args.number):
             try:
                 print(format.format(**change))
             except KeyError as ke:

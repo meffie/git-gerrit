@@ -7,7 +7,7 @@ The heavy lifting is done with the pygerrit2 package.
 
 Usage::
 
-    git gerrit-query [--format=<string>] <search terms>
+    git gerrit-query [-n <limit>] [--format=<string>] <search terms>
     git gerrit-fetch [--no-branch] [--checkout] <number>
 
 Installation
@@ -34,30 +34,24 @@ Use the openafs.org gerrit::
 
 Find open gerrits on the master branch::
 
-    $ git gerrit-query is:open branch:master limit:5
+    $ git gerrit-query -n3 is:open branch:master
     13030 redhat: Make separate debuginfo for kmods work with recent rpm
     13031 redhat: PACKAGE_VERSION macro no longer exists
     13021 autoconf: update curses.m4
-    12202 autoconf: autoupdate macros
-    12203 Remove obsolete retsigtype
 
 Find gerrits with subjects containing the term 'debuginfo'::
 
-    $ git gerrit-query debuginfo limit:5
+    $ git gerrit-query -n3 debuginfo
     13030 redhat: Make separate debuginfo for kmods work with recent rpm
     13029 redhat: Create unique debuginfo packages for kmods
     12818 redhat: separate debuginfo package for kmod rpm
-    12977 redhat: Create unique debuginfo packages for kmods
-    12986 redhat: Create unique debuginfo packages for kmods
 
 Also show the branch name::
 
-    $ git gerrit-query '--format={branch:>20s} {_number} {subject}' debuginfo limit:5
+    $ git gerrit-query -n3 --format='{branch:>20s} {_number} {subject}' debuginfo
                   master 13030 redhat: Make separate debuginfo for kmods work with recent rpm
     openafs-stable-1_6_x 13029 redhat: Create unique debuginfo packages for kmods
     openafs-stable-1_6_x 12818 redhat: separate debuginfo package for kmod rpm
-                  master 12977 redhat: Create unique debuginfo packages for kmods
-    openafs-stable-1_8_x 12986 redhat: Create unique debuginfo packages for kmods
 
 Fetch a gerrit::
 

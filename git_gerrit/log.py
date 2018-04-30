@@ -44,15 +44,15 @@ def log(number=None, reverse=False, revision=None, format=FORMAT, **kwargs):
         m = re.match(r'^hash:(.*)', line)
         if m:
             fields['hash'] = m.group(1)
-            next
+            continue
         m = re.match(r'^subject:(.*)', line)
         if m:
             fields['subject'] = m.group(1)
-            next
+            continue
         m = re.match(r'^Reviewed-on: .*/([0-9]+)$', line)
         if m:
             fields['number'] = m.group(1) # get last one
-            next
+            continue
         if line == '%%':
             print(format.format(**fields))
             fields = {'hash':'', 'subject':'', 'number':'-'}

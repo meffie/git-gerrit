@@ -31,7 +31,7 @@ include Makefile.config
 
 version: $(NAME)/version.py
 $(NAME)/version.py:
-	echo "__version__ = '$(VERSION)'" >$@
+	echo "__version__ = u'$(VERSION)'" >$@
 
 lint: version
 	$(PYFLAKES) $(NAME)/*.py

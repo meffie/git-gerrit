@@ -21,6 +21,7 @@
 """Command line gerrit fetch"""
 
 from __future__ import print_function
+from __future__ import unicode_literals
 from sh import git, ErrorReturnCode_1
 from git_gerrit.query import query
 from git_gerrit.cfg import config, GerritConfigError

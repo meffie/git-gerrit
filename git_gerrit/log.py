@@ -21,12 +21,18 @@
 """git log with gerrit numbers"""
 
 from __future__ import print_function
+from __future__ import unicode_literals
 from sh import git
 import re
 
-FORMAT = '{number} {hash} {subject}'
-
-def log(number=None, reverse=False, revision=None, format=FORMAT, **kwargs):
+def log(number=None, format=None, reverse=False, revision=None, **kwargs):
+    if format is None:
+        format = '{number} {hash} {subject}'
+    else:
+        try:
+            format = format.decode('utf-8') # convert python2 string to unicode
+        except AttributeError:
+            pass
     args = []
     if revision:
         args.append(revision)
@@ -60,7 +66,7 @@ def log(number=None, reverse=False, revision=None, format=FORMAT, **kwargs):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='git log one-line with gerrit numbers')
-    parser.add_argument('--format', help='output format', default=FORMAT)
+    parser.add_argument('--format', help='output format')
     parser.add_argument('-n', '--number', type=int, help='number of commits')
     parser.add_argument('-r', '--reverse', action='store_true', help='reverse order')
     parser.add_argument('revision', nargs='?', help='revision range')

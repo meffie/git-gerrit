@@ -21,6 +21,7 @@
 """Command line gerrit query"""
 
 from __future__ import print_function
+from __future__ import unicode_literals
 from pygerrit2.rest import GerritRestAPI
 from git_gerrit.cfg import config, GerritConfigError
 try:
@@ -58,8 +59,12 @@ def main():
     parser.add_argument('--format', help='output format string', default='{_number} {subject}')
     parser.add_argument('term', metavar='<term>', nargs='+', help='search term')
     args = parser.parse_args()
-    format = args.format
     search = ' '.join(args.term)
+    format = args.format
+    try:
+        format = format.decode('utf-8') # convert python2 string to unicode
+    except AttributeError:
+        pass
     try:
         for change in query(search, limit=args.number):
             try:

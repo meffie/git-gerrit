@@ -4,14 +4,11 @@ except ImportError:
     # Fallback to standard library distutils.
     from distutils.core import setup
 
-try:
-    version = open('version.txt').read().strip()
-except IOError:
-    version = '0.0.0'
+exec(open('git_gerrit/version.py').read())
 
 setup(
     name='git_gerrit',
-    version=version,
+    version=__version__,
     description='Gerrit review system command line tools.',
     long_description=open('README.rst').read(),
     author='Michael Meffie',

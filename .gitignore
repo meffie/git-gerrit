@@ -1,6 +1,5 @@
 Makefile.config
-version.txt
-*/__init__.py
+*/version.py
 *.pyc
 MANIFEST
 *egg-info/

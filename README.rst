@@ -1,25 +1,28 @@
 git-gerrit
 ==========
 
-Command line tool for the Gerrit code review system to search and fetch
-patchsets, with an emphasis on the human-readable legacy Gerrit numbers.
-The heavy lifting is done with the pygerrit2 package.
+**git-gerrit** is command line tool for working with the Gerrit code review
+system, with an emphasis on the Gerrit legacy numerical identifiers.  The heavy
+lifting is done with the **pygerrit2** package to access the Gerrit REST API.
 
-Usage::
+**git-gerrit** is compatible with Python 2 and Python 3.
 
-    git gerrit-query [-n <limit>] [--format=<string>] <search terms>
-    git gerrit-fetch [--no-branch] [--checkout] <number>
+Commands::
+
+    git gerrit-query -- search for gerrit numbers
+    git gerrit-fetch -- fetch gerrits by number
+    git gerrit-log   -- log oneline with gerrit numbers
 
 Installation
 ============
 
-The package can be installed with the makefile. pip will be used for the
-installation, if found, otherwise the setup.py will be used::
+The package can be installed with the makefile. If found, **pip** will be used
+for the installation, otherwise **setup.py** will be used::
 
     make install
 
 Set the Gerrit host and project names in the local git configuration before
-running the git-gerrit commands::
+running the **git-gerrit** commands::
 
     git config gerrit.host <gerrit-hostname>
     git config gerrit.project <gerrit-project>
@@ -65,8 +68,28 @@ Cherry-pick a gerrit onto the current branch::
 
     $ git gerrit-fetch --no-branch 13001 && git cherry-pick FETCH_HEAD
 
+Show gerrit numbers in one the checked out branch::
+
+    $ git gerrit-log -n3
+    12958 f47cb2d Suppress statement not reached warnings under Solaris Studio
+    12957 306f0f3 afs: squash empty declaration warning
+    12955 e006609 libafs: git ignore build artifacts on Solaris
+
+Show gerrit numbers by a revision (revision ranges work as well)::
+
+    $ git gerrit-log -n3 openafs-stable-1_8_0
+    12953 a08327f Update NEWS for 1.8.0 final release
+    12938 acb0e84 afs_pioctl: avoid -Wpointer-sign
+    12950 b73863b LINUX: fix RedHat 7.5 ENOTDIR issues
+
+Show just the gerrit numbers and subjects::
+
+    $ git gerrit-log -n3 --format='{number}: {subject}'
+    12958: Suppress statement not reached warnings under Solaris Studio
+    12957: afs: squash empty declaration warning
+    12955: libafs: git ignore build artifacts on Solaris
+
 See Also
 ========
 
-See the git-review project for a more complete toolset for git/gerrit
-workflows.
+See the **git-review** project for a more complete git/gerrit workflow.

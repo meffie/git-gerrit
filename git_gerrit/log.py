@@ -22,6 +22,7 @@
 
 from __future__ import print_function
 from __future__ import unicode_literals
+from git_gerrit.unicode import cook, asciitize
 from sh import git
 import re
 
@@ -29,10 +30,7 @@ def log(number=None, format=None, reverse=False, revision=None, **kwargs):
     if format is None:
         format = '{number} {hash} {subject}'
     else:
-        try:
-            format = format.decode('utf-8') # convert python2 string to unicode
-        except AttributeError:
-            pass
+        format = cook(format)
     args = []
     if revision:
         args.append(revision)
@@ -46,6 +44,7 @@ def log(number=None, format=None, reverse=False, revision=None, **kwargs):
         options['max-count'] = number
     fields = {'hash':'', 'subject':'', 'number':'-' }
     for line in git.log(*args, **options):
+        line = cook(line)
         line = line.strip()
         m = re.match(r'^hash:(.*)', line)
         if m:
@@ -59,8 +58,15 @@ def log(number=None, format=None, reverse=False, revision=None, **kwargs):
         if m:
             fields['number'] = m.group(1) # get last one
             continue
-        if line == '%%':
-            print(format.format(**fields))
+        m = re.match(r'^%%$', line)
+        if m:
+            try:
+                print(format.format(**fields))
+            except UnicodeEncodeError:
+                # Fall back to ascii only.
+                for k in fields:
+                    fields[k] = asciitize(fields[k])
+                print(format.format(**fields))
             fields = {'hash':'', 'subject':'', 'number':'-'}
 
 def main():

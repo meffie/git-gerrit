@@ -24,6 +24,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from pygerrit2.rest import GerritRestAPI
 from git_gerrit.cfg import config, GerritConfigError
+from git_gerrit.unicode import cook, asciitize
 try:
     from urllib.parse import urlencode
 except ImportError:
@@ -60,11 +61,7 @@ def main():
     parser.add_argument('term', metavar='<term>', nargs='+', help='search term')
     args = parser.parse_args()
     search = ' '.join(args.term)
-    format = args.format
-    try:
-        format = format.decode('utf-8') # convert python2 string to unicode
-    except AttributeError:
-        pass
+    format = cook(args.format)
     try:
         for change in query(search, limit=args.number):
             try:
@@ -72,6 +69,12 @@ def main():
             except KeyError as ke:
                 print('Unknown --format parameter:', ke.message)
                 break
+            except UnicodeEncodeError:
+                # Fall back to plain ascii.
+                for c in change:
+                    change[c] = asciitize(change[c])
+                print(format.format(**change))
+
     except GerritConfigError as e:
         print("Error:", e.message)
 

@@ -25,6 +25,7 @@ from __future__ import unicode_literals
 from pygerrit2.rest import GerritRestAPI
 from git_gerrit.cfg import config, GerritConfigError
 from git_gerrit.unicode import cook, asciitize
+from pprint import pprint
 try:
     from urllib.parse import urlencode
 except ImportError:
@@ -39,6 +40,7 @@ def query(search, **options):
     returns:
         list of change info dicts
     """
+    details = options.pop('details', False)
     url="https://{0}".format(config['host'])
     gerrit = GerritRestAPI(url=url)
     if 'project:' not in search:
@@ -51,21 +53,33 @@ def query(search, **options):
         if options[option] is True:
             params.append(('o', option.upper()))
     query = '/changes/?{0}'.format(urlencode(params))
-    return gerrit.get(query)
+    changes = gerrit.get(query)
+    if details:
+        for change in changes:
+            change_id = change['change_id']
+            query = '/changes/{0}/detail'.format(change_id)
+            change['details'] = gerrit.get(query)
+    return changes
 
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='query gerrit')
     parser.add_argument('-n', '--number', help='limit the number of results', type=int)
-    parser.add_argument('--format', help='output format string', default='{_number} {subject}')
+    parser.add_argument('--format', help='output format string', default='{number} {subject}')
+    parser.add_argument('--dump', help='dump data', action='store_true')
+    parser.add_argument('--details', help='get extra details', action='store_true')
     parser.add_argument('term', metavar='<term>', nargs='+', help='search term')
     args = parser.parse_args()
     search = ' '.join(args.term)
     format = cook(args.format)
+    format = format.replace('{number', '{_number')
     try:
-        for change in query(search, limit=args.number):
+        for change in query(search, limit=args.number, details=args.details):
             try:
-                print(format.format(**change))
+                if args.dump:
+                    pprint(change)
+                else:
+                    print(format.format(**change))
             except KeyError as ke:
                 print('Unknown --format parameter:', ke.message)
                 break

@@ -71,7 +71,9 @@ def log(number=None, format=None, reverse=False, revision=None, **kwargs):
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='git log one-line with gerrit numbers')
+    parser = argparse.ArgumentParser(
+               description='git log one-line with gerrit numbers',
+               epilog='format fields: number, hash, subject')
     parser.add_argument('--format', help='output format')
     parser.add_argument('-n', '--number', type=int, help='number of commits')
     parser.add_argument('-r', '--reverse', action='store_true', help='reverse order')

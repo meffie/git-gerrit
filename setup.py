@@ -14,7 +14,7 @@ setup(
     author='Michael Meffie',
     author_email='mmeffie@sinenomine.net',
     license='BSD',
-    url='https://github.com/meffie/git_gerrit',
+    url='https://github.com/meffie/git-gerrit',
     packages=['git_gerrit'],
     install_requires=[
         'sh',

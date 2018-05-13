@@ -18,7 +18,7 @@ Installation
 
 Install with pip::
 
-    pip install git_gerrit
+    pip install git-gerrit
 
 Alternatively, clone the git repo and install with the provided makefile.  If
 found, the makefile will **pip** to install the requirements and the package,

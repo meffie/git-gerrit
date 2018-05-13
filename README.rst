@@ -1,9 +1,9 @@
 git-gerrit
 ==========
 
-**git-gerrit** is command line tool for working with the Gerrit code review
-system, with an emphasis on the Gerrit legacy numerical identifiers.  The heavy
-lifting is done with the **pygerrit2** package to access the Gerrit REST API.
+**git-gerrit** is command line tool for the Gerrit code review system, with an
+emphasis on the Gerrit legacy numerical identifiers.  The heavy lifting is done
+with the **pygerrit2** package to access the Gerrit REST API.
 
 **git-gerrit** is compatible with Python 2 and Python 3.
 
@@ -16,14 +16,22 @@ Commands::
 Installation
 ============
 
-The package can be installed with the makefile. If found, **pip** will be used
-for the installation, otherwise **setup.py** will be used::
+Install with pip::
 
+    pip install git_gerrit
+
+Alternatively, clone the git repo and install with the provided makefile.  If
+found, the makefile will **pip** to install the requirements and the package,
+otherwise **setup.py** will be used::
+
+    git clone https://github.com/meffie/git-gerrit.git
+    cd git-gerrit
     make install
 
 Set the Gerrit host and project names in the local git configuration before
 running the **git-gerrit** commands::
 
+    cd <project>
     git config gerrit.host <gerrit-hostname>
     git config gerrit.project <gerrit-project>
 
@@ -92,4 +100,4 @@ Show just the gerrit numbers and subjects::
 See Also
 ========
 
-See the **git-review** project for a more complete git/gerrit workflow.
+See the **git-review** project for a more complete git/gerrit workflow tool.

@@ -64,6 +64,13 @@ Also show the branch name::
     openafs-stable-1_6_x 13029 redhat: Create unique debuginfo packages for kmods
     openafs-stable-1_6_x 12818 redhat: separate debuginfo package for kmod rpm
 
+List the gerrit topics on a branch::
+
+    $ git gerrit-query --format='{topic}' status:open branch:master | sort -u | head -n3
+    afsd-cache-verify
+    AFS-OSD-integration
+    afs_read-EOF
+
 Fetch a gerrit::
 
     $ git gerrit-fetch 12977

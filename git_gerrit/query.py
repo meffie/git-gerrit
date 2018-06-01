@@ -54,8 +54,10 @@ def query(search, **options):
             params.append(('o', option.upper()))
     query = '/changes/?{0}'.format(urlencode(params))
     changes = gerrit.get(query)
-    if details:
-        for change in changes:
+    for change in changes:
+        if not 'topic' in change:
+            change['topic'] = 'no-topic'  # default for --format "{topic}"
+        if details:
             change_id = change['change_id']
             query = '/changes/{0}/detail'.format(change_id)
             change['details'] = gerrit.get(query)

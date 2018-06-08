@@ -20,13 +20,11 @@ setup(
         'sh',
         'pygerrit2',
     ],
-    entry_points = {
-        'console_scripts': [
-            'git-gerrit-query=git_gerrit.query:main',
-            'git-gerrit-fetch=git_gerrit.fetch:main',
-            'git-gerrit-log=git_gerrit.log:main',
-        ],
-    },
+    scripts = [
+        'bin/git-gerrit-query',
+        'bin/git-gerrit-fetch',
+        'bin/git-gerrit-log',
+    ],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',

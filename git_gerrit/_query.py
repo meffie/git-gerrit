@@ -23,8 +23,8 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 from pygerrit2.rest import GerritRestAPI
-from git_gerrit.cfg import config, GerritConfigError
-from git_gerrit.unicode import cook, asciitize
+from git_gerrit._cfg import config, GerritConfigError
+from git_gerrit._unicode import cook, asciitize
 from pprint import pprint
 try:
     from urllib.parse import urlencode

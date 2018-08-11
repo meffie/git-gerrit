@@ -24,40 +24,41 @@ help:
 	@echo "  clean          delete generated files"
 	@echo "  distclean      delete generated and config files"
 
-Makefile.config: Makefile
+Makefile.config: configure.py
 	python configure.py >$@
 
 include Makefile.config
 
-version: $(NAME)/version.py
-$(NAME)/version.py:
+$(NAME)/_version.py:
 	echo "__version__ = u'$(VERSION)'" >$@
 
-lint: version
+generated: Makefile.config $(NAME)/_version.py
+
+lint: generated
 	$(PYFLAKES) $(NAME)/*.py
 
-test: version
+test: generated
 	@echo todo
 
-sdist: version
+sdist: generated
 	$(PYTHON) setup.py sdist
 
-wheel: version
+wheel: generated
 	$(PYTHON) setup.py bdist_wheel
 
-rpm: version
+rpm: generated
 	$(PYTHON) setup.py bdist_rpm
 
-deb: version
+deb: generated
 	$(PYTHON) setup.py --command-packages=stdeb.command bdist_deb
 
-install: version
+install: generated
 	$(MAKE) -f Makefile.$(INSTALL) $@
 
-install-user: version
+install-user: generated
 	$(MAKE) -f Makefile.$(INSTALL) $@
 
-install-dev: version
+install-dev: generated
 	$(MAKE) -f Makefile.$(INSTALL) $@
 
 uninstall:
@@ -76,6 +77,6 @@ clean:
 	rm -f MANIFEST
 
 distclean: clean
-	rm -f $(NAME)/version.py
+	rm -f $(NAME)/_version.py
 	rm -f Makefile.config
 	rm -f files.txt

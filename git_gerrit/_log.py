@@ -22,7 +22,7 @@
 
 from __future__ import print_function
 from __future__ import unicode_literals
-from git_gerrit.unicode import cook, asciitize
+from git_gerrit._unicode import cook, asciitize
 from sh import git
 import re
 

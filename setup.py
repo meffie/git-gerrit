@@ -4,7 +4,7 @@ except ImportError:
     # Fallback to standard library distutils.
     from distutils.core import setup
 
-exec(open('git_gerrit/version.py').read())
+exec(open('git_gerrit/_version.py').read())
 
 setup(
     name='git_gerrit',

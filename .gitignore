@@ -1,5 +1,5 @@
 Makefile.config
-*/version.py
+*/_version.py
 *.pyc
 MANIFEST
 *egg-info/
@@ -8,3 +8,6 @@ dist/
 deb_dist/
 *.tar.gz
 files.txt
+venv/
+venv2/
+venv3/

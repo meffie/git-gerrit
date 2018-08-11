@@ -26,11 +26,7 @@ from git_gerrit.unicode import cook, asciitize
 from sh import git
 import re
 
-def log(number=None, format=None, reverse=False, revision=None, **kwargs):
-    if format is None:
-        format = '{number} {hash} {subject}'
-    else:
-        format = cook(format)
+def log(number=None, reverse=False, revision=None, **kwargs):
     args = []
     if revision:
         args.append(revision)
@@ -60,26 +56,32 @@ def log(number=None, format=None, reverse=False, revision=None, **kwargs):
             continue
         m = re.match(r'^%%$', line)
         if m:
-            try:
-                print(format.format(**fields))
-            except UnicodeEncodeError:
-                # Fall back to ascii only.
-                for k in fields:
-                    fields[k] = asciitize(fields[k])
-                print(format.format(**fields))
+            yield fields
             fields = {'hash':'', 'subject':'', 'number':'-'}
 
 def main():
     import argparse
+    DEFAULT_FORMAT = '{number} {hash} {subject}'
     parser = argparse.ArgumentParser(
                description='git log one-line with gerrit numbers',
                epilog='format fields: number, hash, subject')
-    parser.add_argument('--format', help='output format')
+    parser.add_argument('--format',
+                        help='output format (default: "{0}")'.format(DEFAULT_FORMAT),
+                        default=DEFAULT_FORMAT)
     parser.add_argument('-n', '--number', type=int, help='number of commits')
     parser.add_argument('-r', '--reverse', action='store_true', help='reverse order')
     parser.add_argument('revision', nargs='?', help='revision range')
-    args = parser.parse_args()
-    log(**vars(args))
+    kwargs = vars(parser.parse_args())
+    format = cook(kwargs.pop('format'))
+
+    for fields in log(**kwargs):
+        try:
+            print(format.format(**fields))
+        except UnicodeEncodeError:
+            # Fall back to ascii only.
+            for k in fields:
+                fields[k] = asciitize(fields[k])
+            print(format.format(**fields))
 
 if __name__ == '__main__':
     main()

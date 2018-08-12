@@ -20,9 +20,9 @@ Install with pip::
 
     pip install git-gerrit
 
-Alternatively, clone the git repo and install with the provided makefile.  If
-found, the makefile will **pip** to install the requirements and the package,
-otherwise **setup.py** will be used::
+To install from source, clone the git repo and install with the provided
+makefile.  If found, the makefile will run **pip** to install the package and
+requirements::
 
     git clone https://github.com/meffie/git-gerrit.git
     cd git-gerrit
@@ -71,11 +71,15 @@ List the gerrit topics on a branch::
     AFS-OSD-integration
     afs_read-EOF
 
-Fetch a gerrit::
+Show gerrit submissions on the master branch I need to review::
+
+    $ git gerrit-query branch:master status:open NOT label:Code-Review=-2 NOT reviewer:$USER
+
+Fetch a gerrit by number::
 
     $ git gerrit-fetch 12977
 
-Checkout a given gerrit::
+Checkout a gerrit by number::
 
     $ git gerrit-fetch --checkout 13000
 

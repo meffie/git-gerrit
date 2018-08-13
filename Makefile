@@ -20,6 +20,7 @@ help:
 	@echo "  uninstall-dev  developer mode uninstall"
 	@echo "development:"
 	@echo "  lint           run python linter"
+	@echo "  checkdocs      check syntax of documentation files"
 	@echo "  test           run unit tests"
 	@echo "  clean          delete generated files"
 	@echo "  distclean      delete generated and config files"
@@ -36,6 +37,9 @@ generated: Makefile.config $(NAME)/_version.py
 
 lint: generated
 	$(PYFLAKES) $(NAME)/*.py
+
+checkdocs: # requires collective.checkdocs
+	$(PYTHON) setup.py checkdocs
 
 test: generated
 	@echo todo

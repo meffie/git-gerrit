@@ -23,7 +23,7 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 from git_gerrit._unicode import cook, asciitize
-from sh import git
+from sh.contrib import git
 import re
 
 def log(number=None, reverse=False, revision=None, **kwargs):

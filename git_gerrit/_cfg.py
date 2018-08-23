@@ -20,7 +20,7 @@
 
 from __future__ import print_function
 from __future__ import unicode_literals
-from sh import git
+from sh.contrib import git
 
 class GerritError(Exception):
     pass

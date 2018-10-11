@@ -38,7 +38,7 @@ def branch_exists(branch):
     except ErrorReturnCode_1:
         return False
 
-def fetch(number, branch=None, checkout=False):
+def fetch(number, repodir=None, branch=None, checkout=False, **kwargs):
     """
     Fetch a gerrit by the legacy change number.
 
@@ -53,9 +53,9 @@ def fetch(number, branch=None, checkout=False):
     raises:
         GerritNotFoundError
     """
-    config = Config()
+    config = Config(repodir)
     print('searching for gerrit {0}'.format(number))
-    changes = query(str(number), current_revision=True)
+    changes = query(str(number), current_revision=True, repodir=repodir)
     if not changes:
         raise GerritNotFoundError('gerrit {0} not found'.format(number))
     revisions = changes[0]['revisions']
@@ -72,22 +72,23 @@ def fetch(number, branch=None, checkout=False):
         return
 
     print('fetching {0} patchset {1}'.format(number, revision['_number']))
-    git.fetch(url, refs)
+    git.fetch(url, refs, _cwd=repodir)
     if branch:
         print('fetched {0} to branch {1}'.format(number, branch))
     else:
         print('fetched {0} to FETCH_HEAD'.format(number))
     if checkout:
         if branch:
-            git.checkout(branch)
+            git.checkout(branch, _cwd=repodir)
             print('checked out branch {0}'.format(branch))
         else:
-            git.checkout('FETCH_HEAD')
+            git.checkout('FETCH_HEAD', _cwd=repodir)
             print('checked out FETCH_HEAD')
 
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='fetch commits from gerrit')
+    parser.add_argument('--repodir', help='path to the git project directory', default=None)
     parser.add_argument('--checkout', default=False, action='store_true',
                         help='checkout after fetch')
     parser.add_argument('--no-branch', default=None, dest='branch', action='store_false',
@@ -96,7 +97,7 @@ def main():
                         help='legacy change number')
     args = parser.parse_args()
     try:
-        fetch(args.number, branch=args.branch, checkout=args.checkout)
+        fetch(**(vars(args)))
     except GerritConfigError as e:
         print("Error:", e.message)
     except GerritNotFoundError as e:

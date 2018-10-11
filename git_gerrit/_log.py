@@ -26,7 +26,7 @@ from git_gerrit._unicode import cook, asciitize
 from sh.contrib import git
 import re
 
-def log(number=None, reverse=False, revision=None, **kwargs):
+def log(number=None, reverse=False, revision=None, repodir=None, **kwargs):
     args = []
     if revision:
         args.append(revision)
@@ -35,6 +35,7 @@ def log(number=None, reverse=False, revision=None, **kwargs):
         'reverse':reverse,
         '_tty_out':False, # disable the pager
         '_iter':True,     # get lines
+        '_cwd':repodir,
     }
     if number:
         options['max-count'] = number
@@ -65,6 +66,7 @@ def main():
     parser = argparse.ArgumentParser(
                description='git log one-line with gerrit numbers',
                epilog='format fields: number, hash, subject')
+    parser.add_argument('--repodir', help='path to the git project directory', default=None)
     parser.add_argument('--format',
                         help='output format (default: "{0}")'.format(DEFAULT_FORMAT),
                         default=DEFAULT_FORMAT)

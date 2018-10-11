@@ -40,8 +40,9 @@ def query(search, **options):
     returns:
         list of change info dicts
     """
-    config = Config()
     details = options.pop('details', False)
+    repodir = options.pop('repodir', None)
+    config = Config(repodir)
     url="https://{0}".format(config['host'])
     gerrit = GerritRestAPI(url=url)
     if 'project:' not in search:
@@ -67,7 +68,8 @@ def query(search, **options):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='query gerrit')
-    parser.add_argument('-n', '--number', help='limit the number of results', type=int)
+    parser.add_argument('--repodir', help='path to the git project directory', default=None)
+    parser.add_argument('-n', '--number', dest='limit', help='limit the number of results', type=int)
     parser.add_argument('--format', help='output format string', default='{number} {subject}')
     parser.add_argument('--dump', help='dump data', action='store_true')
     parser.add_argument('--details', help='get extra details', action='store_true')
@@ -77,7 +79,7 @@ def main():
     format = cook(args.format)
     format = format.replace('{number', '{_number')
     try:
-        for change in query(search, limit=args.number, details=args.details):
+        for change in query(search, **(vars(args))):
             try:
                 if args.dump:
                     pprint(change)

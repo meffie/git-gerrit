@@ -33,13 +33,13 @@ class GerritConfigError(KeyError):
 
 class Config:
     """Read the gerrit section of the git config."""
-    def __init__(self):
-        self.config = self._read('gerrit')
+    def __init__(self, repodir=None):
+        self.config = self._read('gerrit', repodir)
 
-    def _read(self, section_name):
+    def _read(self, section_name, repodir=None):
         """Retrieve a section of the git config."""
         config = {}
-        for line in git.config(list=True):
+        for line in git.config(list=True, _cwd=repodir):
             name,value = line.strip().split('=', 1)
             components = name.split('.')
             if len(components) < 2:

@@ -64,5 +64,3 @@ class Config:
     def get(self, variable, default=None):
         """Get a value or return a default if misssing."""
         return self.config.get(variable, default)
-
-config = Config()

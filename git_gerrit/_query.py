@@ -23,7 +23,7 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 from pygerrit2.rest import GerritRestAPI
-from git_gerrit._cfg import config, GerritConfigError
+from git_gerrit._cfg import Config, GerritConfigError
 from git_gerrit._unicode import cook, asciitize
 from pprint import pprint
 try:
@@ -40,6 +40,7 @@ def query(search, **options):
     returns:
         list of change info dicts
     """
+    config = Config()
     details = options.pop('details', False)
     url="https://{0}".format(config['host'])
     gerrit = GerritRestAPI(url=url)

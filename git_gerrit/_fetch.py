@@ -25,7 +25,7 @@ from __future__ import unicode_literals
 from sh.contrib import git
 from sh import ErrorReturnCode_1
 from git_gerrit._query import query
-from git_gerrit._cfg import config, GerritConfigError
+from git_gerrit._cfg import Config, GerritConfigError
 
 class GerritNotFoundError(Exception):
     pass
@@ -53,6 +53,7 @@ def fetch(number, branch=None, checkout=False):
     raises:
         GerritNotFoundError
     """
+    config = Config()
     print('searching for gerrit {0}'.format(number))
     changes = query(str(number), current_revision=True)
     if not changes:

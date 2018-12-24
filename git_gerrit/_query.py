@@ -40,6 +40,7 @@ def query(search, **options):
     returns:
         list of change info dicts
     """
+    dump = options.pop('dump', False)
     details = options.pop('details', False)
     repodir = options.pop('repodir', None)
     config = Config(repodir)

@@ -122,12 +122,12 @@ Using git aliases
 =================
 
 Commonly used queries can be saved as git aliases. For example to show the
-gerrits that a user has not reviewed on the master branch::
+gerrits which have not been reviewed yet:
 
-    $ git config alias.gerrit-todo 'gerrit-query branch:master status:open NOT label:Code-Review=-2 NOT reviewer:tycobb@yoyodyne.com'
+    [alias]
+    # git gerrit-todo [<branch>] [<userid>]
+    gerrit-todo = "!f() { git-gerrit-query \"branch:${1-master} is:open NOT label:Code-Review>=+1,${2-$USER}\"; }; f"
 
-    $ git gerrit-todo
-    ...
 
 See Also
 ========

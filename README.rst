@@ -14,6 +14,7 @@ Commands::
     git gerrit-query -- search for gerrit numbers
     git gerrit-fetch -- fetch gerrits by number
     git gerrit-log   -- log oneline with gerrit numbers
+    git gerrit-unpicked -- list gerrit numbers which have not been cherry-picked
 
 Installation
 ============
@@ -23,7 +24,7 @@ Install with pip::
     pip install git-gerrit
 
 To install from source, clone the git repo and install with the provided
-makefile.  If found, the makefile will run **pip** to install the package and
+makefile.  If found, `make` will run `pip` to install the package and
 requirements::
 
     git clone https://github.com/meffie/git-gerrit.git
@@ -118,11 +119,21 @@ Show just the gerrit numbers and subjects::
     12957: afs: squash empty declaration warning
     12955: libafs: git ignore build artifacts on Solaris
 
+Show the commits on the master branch which have not been cherry-picked on to
+the stable branch. (Gerrits may already exists for them.)::
+
+    $ git gerrit-unpicked -u origin/master origin/openafs-stable-1_8_x
+    13656 4eeed830fa31b7b8b5487ba619acbc8d30642aaa afscp: Link against opr/roken/hcrypto
+    13659 f5f59cd8d336b153e2b762bb7afd16e6ab1b1ee2 util: serverLog using memory after free
+    13665 1210a8d6d96db2d84595d35ef81ec5d176de05e8 LINUX: Run the 'sparse' checker if available
+    ...
+
+
 Using git aliases
 =================
 
 Commonly used queries can be saved as git aliases. For example to show the
-gerrits which have not been reviewed yet:
+gerrits which have not been reviewed yet::
 
     [alias]
     # git gerrit-todo [<branch>] [<userid>]

@@ -24,6 +24,7 @@ setup(
         'bin/git-gerrit-query',
         'bin/git-gerrit-fetch',
         'bin/git-gerrit-log',
+        'bin/git-gerrit-unpicked',
     ],
     classifiers=[
         'Development Status :: 4 - Beta',

@@ -26,12 +26,12 @@ from git_gerrit._unicode import cook, asciitize
 from sh.contrib import git
 import re
 
-def log(number=None, reverse=False, revision=None, repodir=None, **kwargs):
+def log(number=None, reverse=False, shorthash=True, revision=None, repodir=None, **kwargs):
     args = []
     if revision:
         args.append(revision)
     options = {
-        'pretty':'hash:%h%nsubject:%s%n%n%b%%%%',
+        'pretty':'hash:%{0}%nsubject:%s%n%n%b%%%%'.format('h' if shorthash else 'H'),
         'reverse':reverse,
         '_tty_out':False, # disable the pager
         '_iter':True,     # get lines

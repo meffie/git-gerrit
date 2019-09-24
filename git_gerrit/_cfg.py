@@ -32,35 +32,23 @@ class GerritConfigError(KeyError):
                        "to set the value of '{0}'.".format(variable)
 
 class Config:
-    """Read the gerrit section of the git config."""
     def __init__(self, repodir=None):
-        self.config = self._read('gerrit', repodir)
+        self.repodir = repodir
 
-    def _read(self, section_name, repodir=None):
-        """Retrieve a section of the git config."""
-        config = {}
-        for line in git.config(list=True, _cwd=repodir):
-            name,value = line.strip().split('=', 1)
-            components = name.split('.')
-            if len(components) < 2:
-                raise GerritError("Too few name components from git config --list")
-            section = components[0]
-            variable = components[-1]
-            subsection = '.'.join(components[1:-1])
-            if section == section_name:
-                if subsection:
-                    config[variable] = (subsection,value)
-                else:
-                    config[variable] = value
-        return config
+    def _get(self, name):
+        """Read a config value with 'git config --get'."""
+        return git.config('--get', 'gerrit.%s' % name, _cwd=self.repodir).rstrip()
 
     def __getitem__(self, variable):
         """Get a value with [] or raise an error if missing."""
-        try:
-            return self.config[variable]
-        except KeyError:
+        value = self._get(variable)
+        if not value:
             raise GerritConfigError(variable)
+        return value
 
     def get(self, variable, default=None):
         """Get a value or return a default if misssing."""
-        return self.config.get(variable, default)
+        value = self._get(variable)
+        if not value:
+            value = default
+        return value

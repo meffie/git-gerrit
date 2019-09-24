@@ -11,9 +11,10 @@ with the **pygerrit2** package to access the Gerrit REST API.
 
 Commands::
 
-    git gerrit-query -- search for gerrit numbers
-    git gerrit-fetch -- fetch gerrits by number
-    git gerrit-log   -- log oneline with gerrit numbers
+    git gerrit-query    -- search for gerrit numbers
+    git gerrit-fetch    -- fetch gerrits by number
+    git gerrit-checkout -- fetch then checkout gerrit by number
+    git gerrit-log      -- log oneline with gerrit numbers
     git gerrit-unpicked -- list gerrit numbers which have not been cherry-picked
 
 Installation
@@ -85,7 +86,7 @@ Fetch a gerrit by number::
 
 Checkout a gerrit by number::
 
-    $ git gerrit-fetch --checkout 13000
+    $ git gerrit-checkout 13000
 
 Cherry-pick a gerrit onto the current branch::
 

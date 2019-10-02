@@ -21,6 +21,7 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 from sh.contrib import git
+from sh import ErrorReturnCode_1
 
 class GerritError(Exception):
     pass
@@ -37,7 +38,10 @@ class Config:
 
     def _get(self, name):
         """Read a config value with 'git config --get'."""
-        return git.config('--get', 'gerrit.%s' % name, _cwd=self.repodir).rstrip()
+        try:
+            return git.config('--get', 'gerrit.%s' % name, _cwd=self.repodir).rstrip()
+        except ErrorReturnCode_1:
+            return None
 
     def __getitem__(self, variable):
         """Get a value with [] or raise an error if missing."""

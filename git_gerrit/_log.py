@@ -72,9 +72,11 @@ def main():
                         default=DEFAULT_FORMAT)
     parser.add_argument('-n', '--number', type=int, help='number of commits')
     parser.add_argument('-r', '--reverse', action='store_true', help='reverse order')
+    parser.add_argument('-l', '--long-hash', action='store_true', default=False, help='show full sha1 hash')
     parser.add_argument('revision', nargs='?', help='revision range')
     kwargs = vars(parser.parse_args())
     format = cook(kwargs.pop('format'))
+    kwargs['shorthash'] = not kwargs['long_hash']
 
     for fields in log(**kwargs):
         try:

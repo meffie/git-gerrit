@@ -26,6 +26,7 @@ setup(
         'bin/git-gerrit-checkout',
         'bin/git-gerrit-log',
         'bin/git-gerrit-unpicked',
+        'bin/git-gerrit-install-hooks',
     ],
     classifiers=[
         'Development Status :: 4 - Beta',

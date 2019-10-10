@@ -16,6 +16,7 @@ Commands::
     git gerrit-checkout -- fetch then checkout gerrit by number
     git gerrit-log      -- log oneline with gerrit numbers
     git gerrit-unpicked -- list gerrit numbers which have not been cherry-picked
+    git gerrit-install-hooks -- install git hooks for gerrit
 
 Installation
 ============

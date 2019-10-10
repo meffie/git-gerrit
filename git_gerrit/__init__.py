@@ -4,6 +4,7 @@ from git_gerrit._fetch import fetch, GerritNotFoundError
 from git_gerrit._log import log
 from git_gerrit._query import query
 from git_gerrit._unpicked import unpicked
+from git_gerrit._install_hooks import install_hooks
 
 _hush_pyflakes = [
     __version__,
@@ -14,4 +15,5 @@ _hush_pyflakes = [
     log,
     query,
     unpicked,
+    install_hooks,
 ]

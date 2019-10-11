@@ -11,42 +11,51 @@ with the **pygerrit2** package to access the Gerrit REST API.
 
 Commands::
 
-    git gerrit-query    -- search for gerrit numbers
-    git gerrit-fetch    -- fetch gerrits by number
-    git gerrit-checkout -- fetch then checkout gerrit by number
-    git gerrit-log      -- log oneline with gerrit numbers
-    git gerrit-unpicked -- list gerrit numbers which have not been cherry-picked
-    git gerrit-install-hooks -- install git hooks for gerrit
+    git gerrit-help           command help
+    git gerrit-install-hooks  install git hooks for gerrit
+    git gerrit-query          search for gerrit numbers
+    git gerrit-fetch          fetch gerrits by number
+    git gerrit-checkout       fetch then checkout gerrit by number
+    git gerrit-log            show oneline log with gerrit numbers
+    git gerrit-unpicked       gerrit numbers not cherry-picked
 
 Installation
 ============
 
 Install with pip::
 
-    pip install git-gerrit
+    $ pip install --user git-gerrit
 
 To install from source, clone the git repo and install with the provided
-makefile.  If found, `make` will run `pip` to install the package and
+makefile.  `make` will run `pip` to install the package and
 requirements::
 
-    git clone https://github.com/meffie/git-gerrit.git
-    cd git-gerrit
-    make install
+    $ git clone https://github.com/meffie/git-gerrit.git
+    $ cd git-gerrit
+    $ make install
 
-Set the Gerrit host and project names in the local git configuration before
-running the **git-gerrit** commands::
+Clone the git project under gerrit review, and in that project directory
+set the Gerrit host and project names in the local git configuration::
 
-    cd <project>
-    git config gerrit.host <gerrit-hostname>
-    git config gerrit.project <gerrit-project>
+    $ cd <your-gerrit-project>
+    $ git config gerrit.host <gerrit-hostname>
+    $ git config gerrit.project <gerrit-project>
+
+Finally, download the git hook provided by gerrit and a git hook provided
+by git-gerrit::
+
+    $ git gerrit-install-hooks
 
 Examples
 ========
 
-Use the openafs.org gerrit::
+Setup a local OpenAFS git repo::
 
+    $ git clone git://git.openafs.org/openeafs.git # (if not already cloned)
+    $ cd openafs
     $ git config --local gerrit.host gerrit.openafs.org
     $ git config --local gerrit.project openafs
+    $ git gerrit-install-hooks
 
 Find open gerrits on the master branch::
 

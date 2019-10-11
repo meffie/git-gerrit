@@ -21,6 +21,7 @@ setup(
         'pygerrit2',
     ],
     scripts = [
+        'bin/git-gerrit-help',
         'bin/git-gerrit-query',
         'bin/git-gerrit-fetch',
         'bin/git-gerrit-checkout',

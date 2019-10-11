@@ -45,7 +45,7 @@ grep '^(cherry picked from commit' "$1" >/dev/null || exit 0
 grep '^Change-Id:' "$1" >/dev/null || exit 0
 echo "prepare-commit-msg: creating new gerrit Change-Id"
 sed -i '/^Change-Id:/d' "$1"
-$GIT_DIR/.git/hooks/commit-msg "$1"
+.git/hooks/commit-msg "$1"
 """
 
 def mode(m):

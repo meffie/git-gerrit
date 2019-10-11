@@ -53,7 +53,7 @@ def log(number=None, reverse=False, shorthash=True, revision=None, repodir=None,
             continue
         m = re.match(r'^Reviewed-on: .*/([0-9]+)$', line)
         if m:
-            fields['number'] = m.group(1) # get last one
+            fields['number'] = int(m.group(1)) # get last one
             continue
         m = re.match(r'^%%$', line)
         if m:

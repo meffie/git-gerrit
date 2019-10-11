@@ -26,12 +26,13 @@ def main():
 Gerrit Code Review helpers
 
     git gerrit-help           command help
-    git gerrit-install-hooks  install git hooks for gerrit
     git gerrit-query          search for gerrit numbers
-    git gerrit-fetch          fetch gerrits by number
-    git gerrit-checkout       fetch then checkout gerrit by number
+    git gerrit-fetch          fetch by gerrit number
+    git gerrit-checkout       fetch then checkout by gerrit number
     git gerrit-log            show oneline log with gerrit numbers
-    git gerrit-unpicked       gerrit numbers not cherry-picked
+    git gerrit-unpicked       find gerrit numbers on upstream branch not cherry picked
+    git gerrit-cherry-pick    cherry pick from upstream branch by gerrit number
+    git gerrit-install-hooks  install git hooks to create gerrit change-ids
 
 Show command details with:
 

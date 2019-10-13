@@ -99,7 +99,7 @@ def main():
                 print(format.format(**change))
 
     except GerritConfigError as e:
-        print("Error:", e.message)
+        sys.stderr.write('Error: {0}\n'.format(e.message))
         code = 2
     return code
 

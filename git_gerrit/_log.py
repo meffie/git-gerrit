@@ -22,9 +22,10 @@
 
 from __future__ import print_function
 from __future__ import unicode_literals
+import re
+import sys
 from git_gerrit._unicode import cook, asciitize
 from sh.contrib import git
-import re
 
 def log(number=None, reverse=False, shorthash=True, revision=None, repodir=None, **kwargs):
     args = []
@@ -86,6 +87,7 @@ def main():
             for k in fields:
                 fields[k] = asciitize(fields[k])
             print(format.format(**fields))
+    return 0
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

@@ -19,6 +19,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from __future__ import print_function
+import sys
 
 def main():
     help = """\
@@ -39,6 +40,7 @@ Show command details with:
     git gerrit-<command> -h
 """
     print(help)
+    return 0
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

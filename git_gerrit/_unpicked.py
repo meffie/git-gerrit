@@ -22,7 +22,8 @@
 
 from __future__ import print_function
 from __future__ import unicode_literals
-
+import argparse
+import sys
 import re
 from git_gerrit._unicode import cook, asciitize
 from git_gerrit._log import log
@@ -91,7 +92,6 @@ def unpicked(upstream_branch='HEAD', downstream_branch=None, repodir=None, **kwa
             yield commit
 
 def main():
-    import argparse
     parser = argparse.ArgumentParser(
                description='find commits which have not been cherry-picked',
                epilog='')
@@ -99,6 +99,7 @@ def main():
     parser.add_argument('downstream_branch', help='downstream branch name')
     args = vars(parser.parse_args())
 
+    code = 0
     for commit in unpicked(**args):
         try:
             print('{number} {hash} {subject}'.format(**commit))
@@ -106,6 +107,7 @@ def main():
             # Fall back to ascii only.
             commit['subject'] = asciitize(commit['subject'])
             print('{number} {hash} {subject}'.format(**commit))
+    return code
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

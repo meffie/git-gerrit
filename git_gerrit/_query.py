@@ -22,10 +22,11 @@
 
 from __future__ import print_function
 from __future__ import unicode_literals
+import sys
+from pprint import pprint
 from pygerrit2.rest import GerritRestAPI
 from git_gerrit._cfg import Config, GerritConfigError
 from git_gerrit._unicode import cook, asciitize
-from pprint import pprint
 try:
     from urllib.parse import urlencode
 except ImportError:
@@ -79,6 +80,7 @@ def main():
     search = ' '.join(args.term)
     format = cook(args.format)
     format = format.replace('{number', '{_number')
+    code = 0
     try:
         for change in query(search, **(vars(args))):
             try:
@@ -88,6 +90,7 @@ def main():
                     print(format.format(**change))
             except KeyError as ke:
                 print('Unknown --format parameter:', ke.message)
+                code = 1
                 break
             except UnicodeEncodeError:
                 # Fall back to plain ascii.
@@ -97,6 +100,8 @@ def main():
 
     except GerritConfigError as e:
         print("Error:", e.message)
+        code = 2
+    return code
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

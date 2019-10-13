@@ -22,6 +22,7 @@
 
 from __future__ import print_function
 from __future__ import unicode_literals
+import sys
 from sh.contrib import git
 from sh import ErrorReturnCode_1
 from git_gerrit._query import query
@@ -96,12 +97,16 @@ def main():
     parser.add_argument('number', metavar='<number>', type=int,
                         help='legacy change number')
     args = parser.parse_args()
+    code = 0
     try:
         fetch(**(vars(args)))
     except GerritConfigError as e:
         print("Error:", e.message)
+        code = 1
     except GerritNotFoundError as e:
         print("Error:", e.message)
+        code = 2
+    return code
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

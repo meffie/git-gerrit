@@ -25,6 +25,7 @@ from __future__ import unicode_literals
 import sys
 from sh.contrib import git
 from sh import ErrorReturnCode_1
+from git_gerrit._help import command_desc
 from git_gerrit._query import query
 from git_gerrit._cfg import Config, GerritConfigError
 
@@ -88,7 +89,7 @@ def fetch(number, repodir=None, branch=None, checkout=False, **kwargs):
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='fetch commits from gerrit')
+    parser = argparse.ArgumentParser(description=command_desc('fetch'))
     parser.add_argument('--repodir', help='path to the git project directory', default=None)
     parser.add_argument('--checkout', default=False, action='store_true',
                         help='checkout after fetch')

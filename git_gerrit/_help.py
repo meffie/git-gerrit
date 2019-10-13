@@ -21,25 +21,31 @@
 from __future__ import print_function
 import sys
 
+_command_descriptions = (
+    ('help',           'List commands.'),
+    ('query',          'Search gerrit.'),
+    ('fetch',          'Fetch by gerrit number.'),
+    ('checkout',       'Fetch then checkout by gerrit number.'),
+    ('log',            'Show oneline log with gerrit numbers.'),
+    ('unpicked',       'Find gerrit numbers on upstream branch not cherry picked.'),
+    ('cherry-pick',    'Cherry pick from upstream branch by gerrit number.'),
+    ('install-hooks',  'Install git hooks to create gerrit change-ids.'),
+)
+
+def command_desc(name):
+    return dict(_command_descriptions)[name]
+
+def command_descriptions():
+    descs = []
+    for name,desc in _command_descriptions:
+        descs.append('    git gerrit-{0:16}  {1}'.format(name, desc))
+    return '\n'.join(descs)
+
 def main():
-    help = """\
-
-Gerrit Code Review helpers
-
-    git gerrit-help           command help
-    git gerrit-query          search for gerrit numbers
-    git gerrit-fetch          fetch by gerrit number
-    git gerrit-checkout       fetch then checkout by gerrit number
-    git gerrit-log            show oneline log with gerrit numbers
-    git gerrit-unpicked       find gerrit numbers on upstream branch not cherry picked
-    git gerrit-cherry-pick    cherry pick from upstream branch by gerrit number
-    git gerrit-install-hooks  install git hooks to create gerrit change-ids
-
-Show command details with:
-
-    git gerrit-<command> -h
-"""
-    print(help)
+    print('\nCommands for gerrit code review:\n')
+    print(command_descriptions())
+    print('\nShow command details with:\n')
+    print('    git gerrit-<command> -h')
     return 0
 
 if __name__ == '__main__':

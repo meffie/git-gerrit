@@ -22,8 +22,10 @@
 
 from __future__ import print_function
 from __future__ import unicode_literals
+import argparse
 import re
 import sys
+from git_gerrit._help import command_desc
 from git_gerrit._unicode import cook, asciitize
 from sh.contrib import git
 
@@ -62,11 +64,10 @@ def log(number=None, reverse=False, shorthash=True, revision=None, repodir=None,
             fields = {'hash':'', 'subject':'', 'number':'-'}
 
 def main():
-    import argparse
     DEFAULT_FORMAT = '{number} {hash} {subject}'
     parser = argparse.ArgumentParser(
-               description='git log one-line with gerrit numbers',
-               epilog='format fields: number, hash, subject')
+                 description=command_desc('log'),
+                 epilog='format fields: number, hash, subject')
     parser.add_argument('--repodir', help='path to the git project directory', default=None)
     parser.add_argument('--format',
                         help='output format (default: "{0}")'.format(DEFAULT_FORMAT),

@@ -23,12 +23,13 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 import sys
+from git_gerrit._help import command_desc
 from git_gerrit._fetch import fetch,GerritNotFoundError
 from git_gerrit._cfg import GerritConfigError
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='checkout a commit from gerrit')
+    parser = argparse.ArgumentParser(description=command_desc('checkout'))
     parser.add_argument('--repodir', help='path to the git project directory', default=None)
     parser.add_argument('number', metavar='<number>', type=int,
                         help='legacy change number')

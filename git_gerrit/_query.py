@@ -23,8 +23,10 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 import sys
+import argparse
 from pprint import pprint
 from pygerrit2.rest import GerritRestAPI
+from git_gerrit._help import command_desc
 from git_gerrit._cfg import Config, GerritConfigError
 from git_gerrit._unicode import cook, asciitize
 try:
@@ -68,8 +70,7 @@ def query(search, **options):
     return changes
 
 def main():
-    import argparse
-    parser = argparse.ArgumentParser(description='query gerrit')
+    parser = argparse.ArgumentParser(description=command_desc('query'))
     parser.add_argument('--repodir', help='path to the git project directory', default=None)
     parser.add_argument('-n', '--number', dest='limit', help='limit the number of results', type=int)
     parser.add_argument('--format', help='output format string', default='{number} {subject}')

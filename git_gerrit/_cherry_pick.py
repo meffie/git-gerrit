@@ -22,9 +22,10 @@
 
 from __future__ import print_function
 from __future__ import unicode_literals
+import argparse
 import os
 import sys
-import argparse
+from git_gerrit._help import command_desc
 from git_gerrit._log import log
 from sh.contrib import git
 from sh import ErrorReturnCode
@@ -61,12 +62,11 @@ def cherry_pick(number, branch=BRANCH):
 def main():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description="""\
-Cherry pick a commit from an upstream branch by gerrit number.
-A new gerrit Change-Id will be created.
-""",
+        description=command_desc('cherry-pick'),
         epilog="""\
-Example:
+Note: A new gerrit Change-Id will be created in the cherry-picked commit.
+
+Example usage:
 
     $ git gerrit-query is:merged branch:master 'fix the frobinator'
     1234 fix the frobinator

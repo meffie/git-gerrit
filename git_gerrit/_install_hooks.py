@@ -26,6 +26,7 @@ import os
 import stat
 import sys
 import requests
+from git_gerrit._help import command_desc
 from git_gerrit._cfg import Config, GerritConfigError
 
 class GerritHookDirNotFound(Exception):
@@ -93,7 +94,7 @@ def install_hooks():
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='install gerrit git hooks')
+    parser = argparse.ArgumentParser(description=command_desc('install-hooks'))
     parser.parse_args()
 
     try:

@@ -21,6 +21,7 @@ help:
 	@echo "  uninstall-dev  developer mode uninstall"
 	@echo "development:"
 	@echo "  lint           run python linter"
+	@echo "  genreadme      generate the readme file"
 	@echo "  checkdocs      check syntax of documentation files"
 	@echo "  test           run unit tests"
 	@echo "  clean          delete generated files"
@@ -34,10 +35,16 @@ include Makefile.config
 $(NAME)/_version.py:
 	echo "__version__ = u'$(VERSION)'" >$@
 
-generated: Makefile.config $(NAME)/_version.py
+README.rst: README.rst.in
+	$(PYTHON) genreadme.py >README.rst
+
+generated: Makefile.config $(NAME)/_version.py README.rst
 
 lint: generated
 	$(PYFLAKES) $(NAME)/*.py
+
+genreadme:
+	$(PYTHON) genreadme.py
 
 checkdocs: # requires collective.checkdocs
 	$(PYTHON) setup.py checkdocs

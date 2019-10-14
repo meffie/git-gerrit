@@ -11,14 +11,14 @@ with the **pygerrit2** package to access the Gerrit REST API.
 
 Commands::
 
-    git gerrit-help           command help
-    git gerrit-query          search for gerrit numbers
-    git gerrit-fetch          fetch by gerrit number
-    git gerrit-checkout       fetch then checkout by gerrit number
-    git gerrit-log            show oneline log with gerrit numbers
-    git gerrit-unpicked       find gerrit numbers on upstream branch not cherry picked
-    git gerrit-cherry-pick    cherry pick from upstream branch by gerrit number
-    git gerrit-install-hooks  install git hooks to create gerrit change-ids
+    git gerrit-help              List commands.
+    git gerrit-query             Search gerrit.
+    git gerrit-fetch             Fetch by gerrit number.
+    git gerrit-checkout          Fetch then checkout by gerrit number.
+    git gerrit-log               Show oneline log with gerrit numbers.
+    git gerrit-unpicked          Find gerrit numbers on upstream branch not cherry picked.
+    git gerrit-cherry-pick       Cherry pick from upstream branch by gerrit number.
+    git gerrit-install-hooks     Install git hooks to create gerrit change-ids.
 
 Installation
 ============
@@ -151,6 +151,155 @@ gerrits which have not been reviewed yet::
     # git gerrit-todo [<branch>] [<userid>]
     gerrit-todo = "!f() { git-gerrit-query \"branch:${1-master} is:open NOT label:Code-Review>=+1,${2-$USER}\"; }; f"
 
+Command help
+============
+
+Command git-gerrit-checkout::
+
+    usage: git-gerrit-checkout [-h] [--repodir REPODIR] <number>
+    
+    Fetch then checkout by gerrit number.
+    
+    positional arguments:
+      <number>           legacy change number
+    
+    optional arguments:
+      -h, --help         show this help message and exit
+      --repodir REPODIR  path to the git project directory
+
+Command git-gerrit-cherry-pick::
+
+    usage: git-gerrit-cherry-pick [-h] [-b <branch>] <number>
+    
+    Cherry pick from upstream branch by gerrit number.
+    
+    positional arguments:
+      <number>              legacy change number
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      -b <branch>, --branch <branch>
+                            upstream branch (default: origin/master)
+    
+    Note: A new gerrit Change-Id will be created in the cherry-picked commit.
+    
+    Example usage:
+    
+        $ git gerrit-query is:merged branch:master 'fix the frobinator'
+        1234 fix the frobinator
+    
+        $ git fetch origin
+        $ git checkout -b fix origin/the-stable-branch
+        ...
+    
+        $ git gerrit-cherry-pick 1234 -b origin/master
+        [fix f378563c94] fix the frobinator
+         Date: Fri Apr 4 10:27:10 2014 -0400
+          2 files changed, 37 insertions(+), 12 deletions(-)
+    
+        $ git push gerrit HEAD:refs/for/the-stable-branch
+        ...
+
+Command git-gerrit-fetch::
+
+    usage: git-gerrit-fetch [-h] [--repodir REPODIR] [--checkout] [--no-branch]
+                            <number>
+    
+    Fetch by gerrit number.
+    
+    positional arguments:
+      <number>           legacy change number
+    
+    optional arguments:
+      -h, --help         show this help message and exit
+      --repodir REPODIR  path to the git project directory
+      --checkout         checkout after fetch
+      --no-branch        do not create a local branch
+
+Command git-gerrit-help::
+
+    
+    Commands for gerrit code review:
+    
+        git gerrit-help              List commands.
+        git gerrit-query             Search gerrit.
+        git gerrit-fetch             Fetch by gerrit number.
+        git gerrit-checkout          Fetch then checkout by gerrit number.
+        git gerrit-log               Show oneline log with gerrit numbers.
+        git gerrit-unpicked          Find gerrit numbers on upstream branch not cherry picked.
+        git gerrit-cherry-pick       Cherry pick from upstream branch by gerrit number.
+        git gerrit-install-hooks     Install git hooks to create gerrit change-ids.
+    
+    Show command details with:
+    
+        git gerrit-<command> -h
+
+Command git-gerrit-install-hooks::
+
+    usage: git-gerrit-install-hooks [-h]
+    
+    Install git hooks to create gerrit change-ids.
+    
+    optional arguments:
+      -h, --help  show this help message and exit
+
+Command git-gerrit-log::
+
+    usage: git-gerrit-log [-h] [--repodir REPODIR] [--format FORMAT] [-n NUMBER]
+                          [-r] [-l]
+                          [revision]
+    
+    Show oneline log with gerrit numbers.
+    
+    positional arguments:
+      revision              revision range
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --repodir REPODIR     path to the git project directory
+      --format FORMAT       output format (default: "{number} {hash} {subject}")
+      -n NUMBER, --number NUMBER
+                            number of commits
+      -r, --reverse         reverse order
+      -l, --long-hash       show full sha1 hash
+    
+    format fields: number, hash, subject
+
+Command git-gerrit-query::
+
+    usage: git-gerrit-query [-h] [--repodir REPODIR] [-n LIMIT] [--format FORMAT]
+                            [--dump] [--details]
+                            <term> [<term> ...]
+    
+    Search gerrit.
+    
+    positional arguments:
+      <term>                search term
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --repodir REPODIR     path to the git project directory
+      -n LIMIT, --number LIMIT
+                            limit the number of results
+      --format FORMAT       output format string
+      --dump                dump data
+      --details             get extra details
+
+Command git-gerrit-unpicked::
+
+    usage: git-gerrit-unpicked [-h] [-u UPSTREAM_BRANCH] downstream_branch
+    
+    Find gerrit numbers on upstream branch not cherry picked.
+    
+    positional arguments:
+      downstream_branch     downstream branch name
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      -u UPSTREAM_BRANCH, --upstream-branch UPSTREAM_BRANCH
+                            upstream branch name
+
+
 
 See Also
 ========
@@ -158,3 +307,4 @@ See Also
 See the `git-review`_ project for a more complete git/gerrit workflow tool.
 
 .. _git-review: https://www.mediawiki.org/wiki/Gerrit/git-review
+

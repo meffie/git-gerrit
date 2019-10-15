@@ -38,59 +38,78 @@ $(NAME)/_version.py:
 README.rst: README.rst.in
 	$(PYTHON) genreadme.py >README.rst
 
+.PHONY: generated
 generated: Makefile.config $(NAME)/_version.py README.rst
 
+.PHONY: lint
 lint: generated
 	$(PYFLAKES) $(NAME)/*.py
 
+.PHONY: genreadme
 genreadme:
 	$(PYTHON) genreadme.py
 
-checkdocs: # requires collective.checkdocs
+# requires collective.checkdocs
+.PHONY: checkdocs
+checkdocs:
 	$(PYTHON) setup.py checkdocs
 
+.PHONY: test
 test: generated
 	@echo todo
 
+.PHONY: sdist
 sdist: generated
 	$(PYTHON) setup.py sdist
 
+.PHONY: wheel
 wheel: generated
 	$(PYTHON) setup.py bdist_wheel
 
+.PHONY: rpm
 rpm: generated
 	$(PYTHON) setup.py bdist_rpm
 
+.PHONY: deb
 deb: generated
 	$(PYTHON) setup.py --command-packages=stdeb.command bdist_deb
 
+.PHONY: upload
 upload: sdist wheel
 	twine upload dist/*
 
+.PHONY: install
 install: generated
 	$(MAKE) -f Makefile.$(INSTALL) $@
 
+.PHONY: install-user
 install-user: generated
 	$(MAKE) -f Makefile.$(INSTALL) $@
 
+.PHONY: install-dev
 install-dev: generated
 	$(MAKE) -f Makefile.$(INSTALL) $@
 
+.PHONY: uninstall
 uninstall:
 	$(MAKE) -f Makefile.$(INSTALL) $@
 
+.PHONY: uninstall-user
 uninstall-user:
 	$(MAKE) -f Makefile.$(INSTALL) $@
 
+.PHONY: uninstall-dev
 uninstall-dev:
 	$(MAKE) -f Makefile.$(INSTALL) $@
 
+.PHONY: clean
 clean:
 	rm -f *.pyc test/*.pyc $(NAME)/*.pyc
 	rm -fr $(NAME).egg-info/ build/ dist/
 	rm -fr $(NAME)*.tar.gz deb_dist/
 	rm -f MANIFEST
 
+.PHONY: distclean
 distclean: clean
 	rm -f $(NAME)/_version.py
 	rm -f Makefile.config

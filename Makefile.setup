@@ -5,21 +5,27 @@
 #
 include Makefile.config
 
+.PHONY: install
 install:
 	$(PYTHON) setup.py install --record files.txt
 
+.PHONY: install-user
 install-user:
 	$(PYTHON) setup.py install --user --record files.txt
 
+.PHONY: install-dev
 install-dev:
 	$(PYTHON) setup.py develop --user --record files.txt
 
+.PHONY: uninstall
 uninstall:
 	test -f files.txt && cat files.txt | xargs rm -f
 
+.PHONY: uninstall-user
 uninstall-user:
 	test -f files.txt && cat files.txt | xargs rm -f
 
+.PHONY: uninstall-dev
 uninstall-dev:
 	$(PYTHON) setup.py develop --user --uninstall
 	@echo todo: remove scripts!

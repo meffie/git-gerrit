@@ -21,7 +21,8 @@ help:
 	@echo "  uninstall-dev  developer mode uninstall"
 	@echo "development:"
 	@echo "  lint           run python linter"
-	@echo "  genreadme      generate the readme file"
+	@echo "  readme         generate the readme file"
+	@echo "  scripts        generate the wrapper scripts"
 	@echo "  checkdocs      check syntax of documentation files"
 	@echo "  test           run unit tests"
 	@echo "  clean          delete generated files"
@@ -45,9 +46,13 @@ generated: Makefile.config $(NAME)/_version.py README.rst
 lint: generated
 	$(PYFLAKES) $(NAME)/*.py
 
-.PHONY: genreadme
-genreadme:
+.PHONY: readme
+readme:
 	$(PYTHON) genreadme.py
+
+.PHONY: scripts
+scripts:
+	$(PYTHON) genscripts.py
 
 # requires collective.checkdocs
 .PHONY: checkdocs

@@ -7,7 +7,11 @@ template = """\
 #!/usr/bin/env python
 import sys
 from git_gerrit.{module} import main
-sys.exit(main())
+try:
+    sys.exit(main())
+except KeyboardInterrupt:
+    sys.stderr.write('Interrupted\\n')
+    sys.exit(1)
 """
 
 for name in sorted(dict(h._command_descriptions).keys()):

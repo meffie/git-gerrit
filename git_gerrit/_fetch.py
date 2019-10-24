@@ -40,16 +40,16 @@ def branch_exists(branch):
     except ErrorReturnCode_1:
         return False
 
-def fetch(number, repodir=None, branch=None, checkout=False, **kwargs):
+def fetch(number, repodir=None, no_branch=False, branch=None, checkout=False, **kwargs):
     """
     Fetch a gerrit by the legacy change number.
 
     args:
         number (int): legacy gerrit number
-        branch (str,None,False):
-                      create a local branch unless False
-                      use branch 'gerrit/<number>/<patchset> if None
-        checkout (bool): checkout the fetched commit
+        no_branch (bool): skip local branch when True
+        branch (str,None): local branch name to fetch to
+                           default: 'gerrit/<number>/<patchset>'
+        checkout (bool): checkout after fetch
     returns:
         None
     raises:
@@ -64,28 +64,28 @@ def fetch(number, repodir=None, branch=None, checkout=False, **kwargs):
     revision = list(revisions.values())[0]
     print('found patchset number {0}'.format(revision['_number']))
     url = 'https://{0}/{1}'.format(config['host'], config['project'])
-    if branch is False:
-        refs = '{0}'.format(revision['ref'])
-    elif branch is None:
-        branch = 'gerrit/{0}/{1}'.format(number, revision['_number'])
-        refs = '{0}:{1}'.format(revision['ref'], branch)
-    if branch and branch_exists(branch):
-        print('branch {0} already exists'.format(branch))
-        return
 
-    print('fetching {0} patchset {1}'.format(number, revision['_number']))
-    git.fetch(url, refs, _cwd=repodir)
-    if branch:
-        print('fetched {0} to branch {1}'.format(number, branch))
-    else:
+    if no_branch:
+        refs = '{0}'.format(revision['ref'])
+        print('fetching {0} patchset {1}'.format(number, revision['_number']))
+        git.fetch(url, refs, _cwd=repodir)
         print('fetched {0} to FETCH_HEAD'.format(number))
-    if checkout:
-        if branch:
-            git.checkout(branch, _cwd=repodir)
-            print('checked out branch {0}'.format(branch))
-        else:
+        if checkout:
             git.checkout('FETCH_HEAD', _cwd=repodir)
             print('checked out FETCH_HEAD')
+    else:
+        if branch is None:
+            branch = 'gerrit/{0}/{1}'.format(number, revision['_number'])
+        if branch_exists(branch):
+            print('branch {0} already exists; remove it or try with --no-branch'.format(branch))
+            return 1
+        refs = '{0}:{1}'.format(revision['ref'], branch)
+        print('fetching {0} patchset {1} to branch {2}'.format(number, revision['_number'], branch))
+        git.fetch(url, refs, _cwd=repodir)
+        print('fetched {0} to branch {1}'.format(number, branch))
+        if checkout:
+            git.checkout(branch, _cwd=repodir)
+            print('checked out branch {0}'.format(branch))
 
 def main():
     import argparse
@@ -93,7 +93,7 @@ def main():
     parser.add_argument('--repodir', help='path to the git project directory', default=None)
     parser.add_argument('--checkout', default=False, action='store_true',
                         help='checkout after fetch')
-    parser.add_argument('--no-branch', default=None, dest='branch', action='store_false',
+    parser.add_argument('--no-branch', default=False, action='store_true',
                         help='do not create a local branch')
     parser.add_argument('number', metavar='<number>', type=int,
                         help='legacy change number')

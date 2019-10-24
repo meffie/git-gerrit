@@ -31,12 +31,17 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description=command_desc('checkout'))
     parser.add_argument('--repodir', help='path to the git project directory', default=None)
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--branch', default=None,
+                        help='local branch to create (default: gerrit/<number>/<patchset>)')
+    group.add_argument('--no-branch', default=False, action='store_true',
+                        help='do not create a local branch')
     parser.add_argument('number', metavar='<number>', type=int,
                         help='legacy change number')
     args = parser.parse_args()
     code = 0
     try:
-        fetch(args.number, repodir=args.repodir, branch=None, checkout=True)
+        fetch(args.number, repodir=args.repodir, no_branch=args.no_branch, branch=args.branch, checkout=True)
     except GerritConfigError as e:
         sys.stderr.write('Error: {0}\n'.format(e.message))
         code = 1

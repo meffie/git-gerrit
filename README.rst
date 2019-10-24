@@ -156,7 +156,9 @@ Command help
 
 Command git-gerrit-checkout::
 
-    usage: git-gerrit-checkout [-h] [--repodir REPODIR] <number>
+    usage: git-gerrit-checkout [-h] [--repodir REPODIR]
+                               [--branch BRANCH | --no-branch]
+                               <number>
     
     Fetch then checkout by gerrit number.
     
@@ -166,6 +168,9 @@ Command git-gerrit-checkout::
     optional arguments:
       -h, --help         show this help message and exit
       --repodir REPODIR  path to the git project directory
+      --branch BRANCH    local branch to create (default:
+                         gerrit/<number>/<patchset>)
+      --no-branch        do not create a local branch
 
 Command git-gerrit-cherry-pick::
 

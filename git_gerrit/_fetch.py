@@ -93,7 +93,10 @@ def main():
     parser.add_argument('--repodir', help='path to the git project directory', default=None)
     parser.add_argument('--checkout', default=False, action='store_true',
                         help='checkout after fetch')
-    parser.add_argument('--no-branch', default=False, action='store_true',
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--branch', default=None,
+                        help='local branch to create (default: gerrit/<number>/<patchset>)')
+    group.add_argument('--no-branch', default=False, action='store_true',
                         help='do not create a local branch')
     parser.add_argument('number', metavar='<number>', type=int,
                         help='legacy change number')

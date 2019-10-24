@@ -202,7 +202,8 @@ Command git-gerrit-cherry-pick::
 
 Command git-gerrit-fetch::
 
-    usage: git-gerrit-fetch [-h] [--repodir REPODIR] [--checkout] [--no-branch]
+    usage: git-gerrit-fetch [-h] [--repodir REPODIR] [--checkout]
+                            [--branch BRANCH | --no-branch]
                             <number>
     
     Fetch by gerrit number.
@@ -214,6 +215,8 @@ Command git-gerrit-fetch::
       -h, --help         show this help message and exit
       --repodir REPODIR  path to the git project directory
       --checkout         checkout after fetch
+      --branch BRANCH    local branch to create (default:
+                         gerrit/<number>/<patchset>)
       --no-branch        do not create a local branch
 
 Command git-gerrit-help::

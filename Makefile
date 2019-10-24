@@ -48,7 +48,7 @@ lint: generated
 
 .PHONY: readme
 readme:
-	$(PYTHON) genreadme.py
+	$(PYTHON) genreadme.py >README.rst
 
 .PHONY: scripts
 scripts:

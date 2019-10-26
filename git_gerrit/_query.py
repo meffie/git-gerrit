@@ -63,6 +63,10 @@ def query(search, **options):
     for change in changes:
         if not 'topic' in change:
             change['topic'] = 'no-topic'  # default for --format "{topic}"
+        if not 'host' in change:
+            change['host'] = config['host']
+        if not 'url' in change:
+            change['url'] = "https://{0}/{1}".format(config['host'], change['_number'])
         if details:
             change_id = change['change_id']
             query = '/changes/{0}/detail'.format(change_id)
@@ -88,6 +92,8 @@ def main():
         'submitted',
         'topic',
         'updated',
+        'host',
+        'url',
     ]
     parser = argparse.ArgumentParser(
         description=command_desc('query'),

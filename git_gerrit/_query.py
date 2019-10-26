@@ -47,7 +47,7 @@ def query(search, **options):
     details = options.pop('details', False)
     repodir = options.pop('repodir', None)
     config = Config(repodir)
-    url="https://{0}".format(config['host'])
+    url = "https://{0}".format(config['host'])
     gerrit = GerritRestAPI(url=url)
     if 'project:' not in search:
         search += ' project:{0}'.format(config['project'])
@@ -70,9 +70,7 @@ def query(search, **options):
     return changes
 
 def main():
-    defaults = {
-        'format': '{number} {subject}',
-    }
+    format_default = '{number} {subject}'
     format_names = [
         'number',
         'branch',
@@ -97,15 +95,21 @@ def main():
     parser.add_argument('--repodir', help='git project directory (default: current directory)')
     parser.add_argument('-n', '--number', dest='limit',metavar='<number>', type=int,
                         help='limit the number of results')
-    parser.add_argument('--format', metavar='<format>', default=defaults['format'],
-                        help='output format template (default: '+defaults['format']+')')
+    parser.add_argument('-f', '--format', metavar='<format>', default=None,
+                        help='output format template (default: '+format_default+')')
     parser.add_argument('--dump', help='debug data dump', action='store_true')
     parser.add_argument('--details', help='get extra details for debug --dump', action='store_true')
     parser.add_argument('term', metavar='<term>', nargs='+', help='search term')
     args = parser.parse_args()
     search = ' '.join(args.term)
-    format = cook(args.format)
-    format = format.replace('{number', '{_number')
+
+    config = Config(repodir=args.repodir)
+    format_ = args.format
+    if not format_:
+        format_ = config.get('queryformat', default=format_default)
+    format_ = cook(format_)
+    format_ = format_.replace('{number', '{_number') # hack alert.
+
     code = 0
     try:
         for change in query(search, **(vars(args))):
@@ -113,7 +117,7 @@ def main():
                 if args.dump:
                     pprint(change)
                 else:
-                    print(format.format(**change))
+                    print(format_.format(**change))
             except KeyError as ke:
                 print('Unknown --format parameter:', ke.message)
                 code = 1

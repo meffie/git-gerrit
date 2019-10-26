@@ -70,12 +70,37 @@ def query(search, **options):
     return changes
 
 def main():
-    parser = argparse.ArgumentParser(description=command_desc('query'))
-    parser.add_argument('--repodir', help='path to the git project directory', default=None)
-    parser.add_argument('-n', '--number', dest='limit', help='limit the number of results', type=int)
-    parser.add_argument('--format', help='output format string', default='{number} {subject}')
-    parser.add_argument('--dump', help='dump data', action='store_true')
-    parser.add_argument('--details', help='get extra details', action='store_true')
+    defaults = {
+        'format': '{number} {subject}',
+    }
+    format_names = [
+        'number',
+        'branch',
+        'change_id',
+        'created',
+        'deletions',
+        'hashtags',
+        'id',
+        'insertions',
+        'owner',
+        'project',
+        'status',
+        'subject',
+        'submittable',
+        'submitted',
+        'topic',
+        'updated',
+    ]
+    parser = argparse.ArgumentParser(
+        description=command_desc('query'),
+        epilog="Available --format template names: "+', '.join(sorted(format_names)))
+    parser.add_argument('--repodir', help='git project directory (default: current directory)')
+    parser.add_argument('-n', '--number', dest='limit',metavar='<number>', type=int,
+                        help='limit the number of results')
+    parser.add_argument('--format', metavar='<format>', default=defaults['format'],
+                        help='output format template (default: '+defaults['format']+')')
+    parser.add_argument('--dump', help='debug data dump', action='store_true')
+    parser.add_argument('--details', help='get extra details for debug --dump', action='store_true')
     parser.add_argument('term', metavar='<term>', nargs='+', help='search term')
     args = parser.parse_args()
     search = ' '.join(args.term)

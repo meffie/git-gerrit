@@ -9,7 +9,10 @@ with the **pygerrit2** package to access the Gerrit REST API.
 
 **git-gerrit** is compatible with Python 2 and Python 3.
 
-Commands::
+Commands
+========
+
+::
 
     git gerrit-help              List commands.
     git gerrit-query             Search gerrit.
@@ -23,27 +26,29 @@ Commands::
 Installation
 ============
 
-Install with pip::
+Install with `pip`::
 
     $ pip install --user git-gerrit
 
-To install from source, clone the git repo and install with the provided
-makefile.  `make` will run `pip` to install the package and
-requirements::
+Install from source::
 
     $ git clone https://github.com/meffie/git-gerrit.git
     $ cd git-gerrit
     $ make install
 
-Clone the git project under gerrit review, and in that project directory
-set the Gerrit host and project names in the local git configuration::
+Set the Gerrit host and project names in your local git repo under Gerrit code
+review::
 
-    $ cd <your-gerrit-project>
+    $ cd <your-git-directory>
     $ git config gerrit.host <gerrit-hostname>
     $ git config gerrit.project <gerrit-project>
 
-Finally, download the git hook provided by gerrit and a git hook provided
-by git-gerrit::
+Configure the format template string::
+
+    $ git config gerrit.queryformat "{number} {subject}"
+
+Install the Gerrit provided `commit-msg` git-hook and the git-gerrrit `prepare-commit-msg`
+git hook::
 
     $ git gerrit-install-hooks
 
@@ -60,28 +65,45 @@ Setup a local OpenAFS git repo::
 
 Find open gerrits on the master branch::
 
-    $ git gerrit-query -n3 is:open branch:master
+    $ git gerrit-query is:open branch:master
     13030 redhat: Make separate debuginfo for kmods work with recent rpm
     13031 redhat: PACKAGE_VERSION macro no longer exists
     13021 autoconf: update curses.m4
 
+Find the gerrit numbers and current patchset numbers of the gerrits open on the
+`master` branch::
+
+    $ git gerrit-query --format='{number},{patchset} {subject}' is:open branch:master
+    13832,9 IPV6 prep: introduce helpers for formatting network addrs
+    13926,2 afs: client read-only mode
+    13927,2 Do not build shared-only libs for --disable-shared
+
+Find links to the open gerrits on the `master` branch::
+
+    $ git gerrit-query --format='{url} {subject}' is:open branch:master
+    https://gerrit.example.com/13832 IPV6 prep: introduce helpers for formatting network addrs
+    https://gerrit.example.com/13926 afs: client read-only mode
+    https://gerrit.example.com/13927 Do not build shared-only libs for --disable-shared
+
 Find gerrits with subjects containing the term 'debuginfo'::
 
-    $ git gerrit-query -n3 debuginfo
+    $ git gerrit-query debuginfo
     13030 redhat: Make separate debuginfo for kmods work with recent rpm
     13029 redhat: Create unique debuginfo packages for kmods
     12818 redhat: separate debuginfo package for kmod rpm
 
-Also show the branch name::
+Find the branch names of gerrits with the subject containing the term 'debuginfo'::
 
-    $ git gerrit-query -n3 --format='{branch:>20s} {_number} {subject}' debuginfo
+    $ git gerrit-query --format='{branch:>20s} {_number} {subject}' debuginfo
                   master 13030 redhat: Make separate debuginfo for kmods work with recent rpm
     openafs-stable-1_6_x 13029 redhat: Create unique debuginfo packages for kmods
     openafs-stable-1_6_x 12818 redhat: separate debuginfo package for kmod rpm
 
+
+
 List the gerrit topics on a branch::
 
-    $ git gerrit-query --format='{topic}' status:open branch:master | sort -u | head -n3
+    $ git gerrit-query --format='{topic}' is:open branch:master | sort -u
     afsd-cache-verify
     AFS-OSD-integration
     afs_read-EOF
@@ -103,30 +125,30 @@ Cherry-pick a gerrit onto the current branch::
 
     $ git gerrit-fetch --no-branch 13001 && git cherry-pick FETCH_HEAD
 
-Show gerrit numbers in one the checked out branch::
+Show gerrit numbers in the checked out branch in the local git repo::
 
-    $ git gerrit-log -n3
+    $ git gerrit-log
     12958 f47cb2d Suppress statement not reached warnings under Solaris Studio
     12957 306f0f3 afs: squash empty declaration warning
     12955 e006609 libafs: git ignore build artifacts on Solaris
 
-Show gerrit numbers by a revision::
+Show gerrit numbers by a revision in the local git repo::
 
-    $ git gerrit-log -n3 openafs-stable-1_8_0
+    $ git gerrit-log openafs-stable-1_8_0
     12953 a08327f Update NEWS for 1.8.0 final release
     12938 acb0e84 afs_pioctl: avoid -Wpointer-sign
     12950 b73863b LINUX: fix RedHat 7.5 ENOTDIR issues
 
-Show gerrit numbers by a range of revisions::
+Show gerrit numbers by a range of revisions in the local git repo::
 
     $ git gerrit-log 607eba34d..origin/openafs-stable-1_8_x
     13268 554176bd2 LINUX: Update to Linux struct iattr->ia_ctime to timespec64 with 4.18
     13266 eb107ed5c Make OpenAFS 1.8.1
     13265 8de978420 Update NEWS for 1.8.1
 
-Show just the gerrit numbers and subjects::
+Show just the gerrit numbers and subjects in the local git repo::
 
-    $ git gerrit-log -n3 --format='{number}: {subject}'
+    $ git gerrit-log --format='{number}: {subject}'
     12958: Suppress statement not reached warnings under Solaris Studio
     12957: afs: squash empty declaration warning
     12955: libafs: git ignore build artifacts on Solaris
@@ -275,7 +297,7 @@ Command git-gerrit-log::
 
 Command git-gerrit-query::
 
-    usage: git-gerrit-query [-h] [--repodir REPODIR] [-n LIMIT] [--format FORMAT]
+    usage: git-gerrit-query [-h] [--repodir REPODIR] [-n <number>] [-f <format>]
                             [--dump] [--details]
                             <term> [<term> ...]
     
@@ -286,12 +308,18 @@ Command git-gerrit-query::
     
     optional arguments:
       -h, --help            show this help message and exit
-      --repodir REPODIR     path to the git project directory
-      -n LIMIT, --number LIMIT
+      --repodir REPODIR     git project directory (default: current directory)
+      -n <number>, --number <number>
                             limit the number of results
-      --format FORMAT       output format string
-      --dump                dump data
-      --details             get extra details
+      -f <format>, --format <format>
+                            output format template (default: "{number} {subject}")
+      --dump                debug data dump
+      --details             get extra details for debug --dump
+    
+    Available --format template names: branch, change_id, created,
+    current_revision, deletions, hash, hashtags, host, id, insertions, number,
+    owner, patchset, project, ref, status, subject, submittable, submitted, topic,
+    updated, url
 
 Command git-gerrit-unpicked::
 

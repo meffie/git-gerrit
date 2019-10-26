@@ -55,18 +55,22 @@ def query(search, **options):
     if 'limit' in options:
         if options['limit']:
             params.append(('n', options['limit']))
+    if not 'current_revision' in options:
+        options['current_revision'] = True
     for option in options:
         if options[option] is True:
             params.append(('o', option.upper()))
     query = '/changes/?{0}'.format(urlencode(params))
     changes = gerrit.get(query)
     for change in changes:
+        change['number'] = change['_number']
+        change['hash'] = change['current_revision'] # alias
+        change['patchset'] = change['revisions'][change['current_revision']]['_number']
+        change['ref'] = change['revisions'][change['current_revision']]['ref']
+        change['host'] = config['host']
+        change['url'] = "https://{0}/{1}".format(config['host'], change['_number'])
         if not 'topic' in change:
             change['topic'] = 'no-topic'  # default for --format "{topic}"
-        if not 'host' in change:
-            change['host'] = config['host']
-        if not 'url' in change:
-            change['url'] = "https://{0}/{1}".format(config['host'], change['_number'])
         if details:
             change_id = change['change_id']
             query = '/changes/{0}/detail'.format(change_id)
@@ -76,10 +80,11 @@ def query(search, **options):
 def main():
     format_default = '{number} {subject}'
     format_names = [
-        'number',
+        # direct fields
         'branch',
         'change_id',
         'created',
+        'current_revision',
         'deletions',
         'hashtags',
         'id',
@@ -90,8 +95,13 @@ def main():
         'subject',
         'submittable',
         'submitted',
-        'topic',
+        'topic',  # synthentic default
         'updated',
+        # synthentic fields
+        'number',
+        'patchset',
+        'ref',
+        'hash',
         'host',
         'url',
     ]
@@ -102,7 +112,7 @@ def main():
     parser.add_argument('-n', '--number', dest='limit',metavar='<number>', type=int,
                         help='limit the number of results')
     parser.add_argument('-f', '--format', metavar='<format>', default=None,
-                        help='output format template (default: '+format_default+')')
+                        help='output format template (default: "'+format_default+'")')
     parser.add_argument('--dump', help='debug data dump', action='store_true')
     parser.add_argument('--details', help='get extra details for debug --dump', action='store_true')
     parser.add_argument('term', metavar='<term>', nargs='+', help='search term')
@@ -114,7 +124,6 @@ def main():
     if not format_:
         format_ = config.get('queryformat', default=format_default)
     format_ = cook(format_)
-    format_ = format_.replace('{number', '{_number') # hack alert.
 
     code = 0
     try:

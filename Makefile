@@ -36,11 +36,8 @@ include Makefile.config
 $(NAME)/_version.py:
 	echo "__version__ = u'$(VERSION)'" >$@
 
-README.rst: README.rst.in
-	$(PYTHON) genreadme.py >README.rst
-
 .PHONY: generated
-generated: Makefile.config $(NAME)/_version.py README.rst
+generated: Makefile.config $(NAME)/_version.py
 
 .PHONY: lint
 lint: generated
@@ -48,7 +45,7 @@ lint: generated
 
 .PHONY: readme
 readme:
-	$(PYTHON) genreadme.py >README.rst
+	$(PYTHON) genreadme.py
 
 .PHONY: scripts
 scripts:

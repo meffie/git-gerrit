@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import re
 from git_gerrit._help import command_descriptions
 from sh import bash
 
@@ -11,8 +12,17 @@ def command_help():
             echo ""
         done""").stdout
 
-print(
-  open('README.rst.in', 'r')\
-  .read()\
-  .replace('@GIT_GERRIT_CMD_DESC@', command_descriptions())\
-  .replace('@GIT_GERRIT_CMD_HELP@', command_help()))
+def subst(text, tag, repl):
+    return re.sub(
+        r'\.\. begin git-gerrit {0}.*\.\. end git-gerrit {0}'.format(tag),
+        '.. begin git-gerrit {0}\n\n{1}\n\n.. end git-gerrit {0}'.format(tag, repl),
+        text, count=1, flags=re.DOTALL)
+
+with open('README.rst', 'r') as f:
+    readme = f.read()
+
+readme = subst(readme, 'desc', '::\n\n' + command_descriptions())
+readme = subst(readme, 'help', command_help())
+
+with open('README.rst', 'w') as f:
+    f.write(readme)

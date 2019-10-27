@@ -12,6 +12,8 @@ with the **pygerrit2** package to access the Gerrit REST API.
 Commands
 ========
 
+.. begin git-gerrit desc
+
 ::
 
     git gerrit-help              List commands.
@@ -22,6 +24,8 @@ Commands
     git gerrit-unpicked          Find gerrit numbers on upstream branch not cherry picked.
     git gerrit-cherry-pick       Cherry pick from upstream branch by gerrit number.
     git gerrit-install-hooks     Install git hooks to create gerrit change-ids.
+
+.. end git-gerrit desc
 
 Installation
 ============
@@ -175,6 +179,8 @@ gerrits which have not been reviewed yet::
 
 Command help
 ============
+
+.. begin git-gerrit help
 
 Command git-gerrit-checkout::
 
@@ -336,6 +342,8 @@ Command git-gerrit-unpicked::
                             upstream branch name
 
 
+
+.. end git-gerrit help
 
 See Also
 ========

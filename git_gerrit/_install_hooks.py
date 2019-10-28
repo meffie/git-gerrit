@@ -26,11 +26,10 @@ import os
 import stat
 import sys
 import requests
+from git_gerrit._error import GerritConfigError, GerritHookDirNotFound
 from git_gerrit._help import command_desc
-from git_gerrit._cfg import Config, GerritConfigError
+from git_gerrit._cfg import Config
 
-class GerritHookDirNotFound(Exception):
-    pass
 
 script = """\
 #!/bin/bash

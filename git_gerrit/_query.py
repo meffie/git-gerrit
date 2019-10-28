@@ -26,8 +26,9 @@ import sys
 import argparse
 from pprint import pprint
 from pygerrit2.rest import GerritRestAPI
+from git_gerrit._error import GerritConfigError
 from git_gerrit._help import command_desc
-from git_gerrit._cfg import Config, GerritConfigError
+from git_gerrit._cfg import Config
 from git_gerrit._unicode import cook, asciitize
 try:
     from urllib.parse import urlencode

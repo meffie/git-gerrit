@@ -25,12 +25,10 @@ from __future__ import unicode_literals
 import sys
 from sh.contrib import git
 from sh import ErrorReturnCode_1
+from git_gerrit._error import GerritConfigError, GerritNotFoundError
 from git_gerrit._help import command_desc
 from git_gerrit._query import query
-from git_gerrit._cfg import Config, GerritConfigError
-
-class GerritNotFoundError(Exception):
-    pass
+from git_gerrit._cfg import Config
 
 def branch_exists(branch):
     """Returns true if branch exists."""

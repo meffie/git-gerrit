@@ -18,33 +18,17 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-from __future__ import print_function
-from __future__ import unicode_literals
-from sh.contrib import git
-from sh import ErrorReturnCode_1
-from git_gerrit._error import GerritConfigError
+class GerritError(Exception):
+    pass
 
-class Config:
-    def __init__(self, repodir=None):
-        self.repodir = repodir
+class GerritConfigError(KeyError):
+    def __init__(self, variable):
+        self.variable = variable
+        self.message = "Use 'git config gerrit.{0} <value>' "\
+                       "to set the value of '{0}'.".format(variable)
 
-    def _get(self, name):
-        """Read a config value with 'git config --get'."""
-        try:
-            return git.config('--get', 'gerrit.%s' % name, _cwd=self.repodir).rstrip()
-        except ErrorReturnCode_1:
-            return None
+class GerritNotFoundError(GerritError):
+    pass
 
-    def __getitem__(self, variable):
-        """Get a value with [] or raise an error if missing."""
-        value = self._get(variable)
-        if not value:
-            raise GerritConfigError(variable)
-        return value
-
-    def get(self, variable, default=None):
-        """Get a value or return a default if misssing."""
-        value = self._get(variable)
-        if not value:
-            value = default
-        return value
+class GerritHookDirNotFound(GerritError):
+    pass

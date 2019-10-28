@@ -23,9 +23,9 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 import sys
+from git_gerrit._error import GerritConfigError, GerritNotFoundError
 from git_gerrit._help import command_desc
-from git_gerrit._fetch import fetch,GerritNotFoundError
-from git_gerrit._cfg import GerritConfigError
+from git_gerrit._fetch import fetch
 
 def main():
     import argparse

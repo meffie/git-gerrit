@@ -27,7 +27,7 @@ from sh.contrib import git
 from sh import ErrorReturnCode_1
 from git_gerrit._error import GerritConfigError, GerritNotFoundError
 from git_gerrit._help import command_desc
-from git_gerrit._query import query
+from git_gerrit._query import current_change
 from git_gerrit._cfg import Config
 
 def branch_exists(branch):
@@ -55,17 +55,13 @@ def fetch(number, repodir=None, no_branch=False, branch=None, checkout=False, **
     """
     config = Config(repodir)
     print('searching for gerrit {0}'.format(number))
-    changes = query(str(number), current_revision=True, repodir=repodir)
-    if not changes:
-        raise GerritNotFoundError('gerrit {0} not found'.format(number))
-    revisions = changes[0]['revisions']
-    revision = list(revisions.values())[0]
-    print('found patchset number {0}'.format(revision['_number']))
+    change = current_change(number, repodir)
+    print('found patchset number {0}'.format(change['patchset']))
     url = 'https://{0}/{1}'.format(config['host'], config['project'])
 
     if no_branch:
-        refs = '{0}'.format(revision['ref'])
-        print('fetching {0} patchset {1}'.format(number, revision['_number']))
+        refs = '{0}'.format(change['ref'])
+        print('fetching {0} patchset {1}'.format(number, change['patchset']))
         git.fetch(url, refs, _cwd=repodir)
         print('fetched {0} to FETCH_HEAD'.format(number))
         if checkout:
@@ -73,12 +69,12 @@ def fetch(number, repodir=None, no_branch=False, branch=None, checkout=False, **
             print('checked out FETCH_HEAD')
     else:
         if branch is None:
-            branch = 'gerrit/{0}/{1}'.format(number, revision['_number'])
+            branch = 'gerrit/{0}/{1}'.format(number, change['patchset'])
         if branch_exists(branch):
             print('branch {0} already exists; remove it or try with --no-branch'.format(branch))
             return 1
-        refs = '{0}:{1}'.format(revision['ref'], branch)
-        print('fetching {0} patchset {1} to branch {2}'.format(number, revision['_number'], branch))
+        refs = '{0}:{1}'.format(change['ref'], branch)
+        print('fetching {0} patchset {1} to branch {2}'.format(number, change['patchset'], branch))
         git.fetch(url, refs, _cwd=repodir)
         print('fetched {0} to branch {1}'.format(number, branch))
         if checkout:

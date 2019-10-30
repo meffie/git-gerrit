@@ -26,7 +26,7 @@ import sys
 import argparse
 from pprint import pprint
 from pygerrit2.rest import GerritRestAPI
-from git_gerrit._error import GerritConfigError
+from git_gerrit._error import GerritConfigError, GerritNotFoundError
 from git_gerrit._help import command_desc
 from git_gerrit._cfg import Config
 from git_gerrit._unicode import cook, asciitize
@@ -77,6 +77,21 @@ def query(search, **options):
             query = '/changes/{0}/detail'.format(change_id)
             change['details'] = gerrit.get(query)
     return changes
+
+def current_change(number, repodir=None):
+    """ Look up the current change in gerrit.
+
+    args:
+        number (int):  the gerrit change number
+        repodir (str): optional path to the git repo directory (for git configuration)
+    returns:
+        a current change dictionary (including the current patchset number)
+    """
+    changes = query('change:{0}'.format(number), limit=1, current_revision=True, repodir=repodir)
+    if not changes or len(changes) != 1:
+        raise GerritNotFoundError('gerrit {0} not found'.format(number))
+    change = changes[0]
+    return change
 
 def main():
     format_default = '{number} {subject}'

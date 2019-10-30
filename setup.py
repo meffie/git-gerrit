@@ -28,6 +28,7 @@ setup(
         'bin/git-gerrit-install-hooks',
         'bin/git-gerrit-log',
         'bin/git-gerrit-query',
+        'bin/git-gerrit-review',
         'bin/git-gerrit-unpicked',
     ],
     classifiers=[

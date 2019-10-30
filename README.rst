@@ -21,6 +21,7 @@ Commands
     git gerrit-fetch             Fetch by gerrit number.
     git gerrit-checkout          Fetch then checkout by gerrit number.
     git gerrit-log               Show oneline log with gerrit numbers.
+    git gerrit-review            Submit review by gerrit number.
     git gerrit-unpicked          Find gerrit numbers on upstream branch not cherry picked.
     git gerrit-cherry-pick       Cherry pick from upstream branch by gerrit number.
     git gerrit-install-hooks     Install git hooks to create gerrit change-ids.
@@ -262,6 +263,7 @@ Command git-gerrit-help::
         git gerrit-fetch             Fetch by gerrit number.
         git gerrit-checkout          Fetch then checkout by gerrit number.
         git gerrit-log               Show oneline log with gerrit numbers.
+        git gerrit-review            Submit review by gerrit number.
         git gerrit-unpicked          Find gerrit numbers on upstream branch not cherry picked.
         git gerrit-cherry-pick       Cherry pick from upstream branch by gerrit number.
         git gerrit-install-hooks     Install git hooks to create gerrit change-ids.
@@ -326,6 +328,37 @@ Command git-gerrit-query::
     current_revision, deletions, hash, hashtags, host, id, insertions, number,
     owner, patchset, project, ref, status, subject, submittable, submitted, topic,
     updated, url
+
+Command git-gerrit-review::
+
+    usage: git-gerrit-review [-h] [--branch <branch>] [--message <message>]
+                             [--code-review {-2,-1,0,+1,+2}]
+                             [--verified {-1,0,+1}] [--abandon | --restore]
+                             [--add-reviewer <email>]
+                             <number>
+    
+    Submit review by gerrit number.
+    
+    positional arguments:
+      <number>              gerrit change number
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --branch <branch>     Branch name
+      --message <message>   Review message
+      --code-review {-2,-1,0,+1,+2}
+                            Code review vote
+      --verified {-1,0,+1}  Verified vote
+      --abandon             Set status to abandoned
+      --restore             Set status to open
+      --add-reviewer <email>
+                            Invite reviewer (this option may be given more than once)
+    
+    Examples:
+    
+        $ git gerrit-review --message="Good Job" --code-review="+1" 12345
+        $ git gerrit-review --message="Works for me" --verified="+1" 12345
+        $ git gerrit-review --add-reviewer="tycobb@yoyodyne.com" --add-reviewer="foo@bar.com" 12345
 
 Command git-gerrit-unpicked::
 

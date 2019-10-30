@@ -27,6 +27,7 @@ _command_descriptions = (
     ('fetch',          'Fetch by gerrit number.'),
     ('checkout',       'Fetch then checkout by gerrit number.'),
     ('log',            'Show oneline log with gerrit numbers.'),
+    ('review',         'Submit review by gerrit number.'),
     ('unpicked',       'Find gerrit numbers on upstream branch not cherry picked.'),
     ('cherry-pick',    'Cherry pick from upstream branch by gerrit number.'),
     ('install-hooks',  'Install git hooks to create gerrit change-ids.'),

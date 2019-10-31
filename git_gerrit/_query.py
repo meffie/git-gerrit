@@ -157,7 +157,7 @@ def main():
                 # Fall back to plain ascii.
                 for c in change:
                     change[c] = asciitize(change[c])
-                print(format.format(**change))
+                print(format_.format(**change))
 
     except GerritConfigError as e:
         sys.stderr.write('Error: {0}\n'.format(e.message))

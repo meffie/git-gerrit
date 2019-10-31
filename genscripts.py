@@ -1,22 +1,24 @@
-# Generate wrapper scripts.
+# Copyright (c) 2019 Sine Nomine Associates
+#
+# Generate git-gerrit wrapper scripts.
+#
+# usage: python genscripts.py
+#
 
 import os
-import git_gerrit._help as h
+import git_gerrit.cli
+from git_gerrit import _chmod as chmod
 
 template = """\
 #!/usr/bin/env python
 import sys
-from git_gerrit.{module} import main
-try:
-    sys.exit(main())
-except KeyboardInterrupt:
-    sys.stderr.write('Interrupted\\n')
-    sys.exit(1)
+from git_gerrit.cli import {0}
+sys.exit({0}())
 """
 
-for name in sorted(dict(h._command_descriptions).keys()):
-    module = '_' + name.replace('-', '_')
-    script = 'bin/git-gerrit-' + name
-    with open(script, 'w') as f:
-        f.write(template.format(module=module))
-    os.system('chmod +x ' + script)
+for name,_ in git_gerrit.cli.commands():
+    fn = name.replace('git gerrit-', 'git_gerrit_').replace('-', '_')
+    filename = os.path.join('bin', name.replace(' ', '-').replace('_', '-'))
+    with open(filename, 'w') as f:
+        f.write(template.format(fn))
+    chmod(filename, 'rwxr-xr-x')

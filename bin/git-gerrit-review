@@ -1,8 +1,4 @@
 #!/usr/bin/env python
 import sys
-from git_gerrit._review import main
-try:
-    sys.exit(main())
-except KeyboardInterrupt:
-    sys.stderr.write('Interrupted\n')
-    sys.exit(1)
+from git_gerrit.cli import git_gerrit_review
+sys.exit(git_gerrit_review())

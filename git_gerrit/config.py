@@ -22,7 +22,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from sh.contrib import git
 from sh import ErrorReturnCode_1
-from git_gerrit._error import GerritConfigError
+from git_gerrit.error import GitGerritConfigError
 
 class Config:
     def __init__(self, repodir=None):
@@ -39,7 +39,7 @@ class Config:
         """Get a value with [] or raise an error if missing."""
         value = self._get(variable)
         if not value:
-            raise GerritConfigError(variable)
+            raise GitGerritConfigError(variable)
         return value
 
     def get(self, variable, default=None):

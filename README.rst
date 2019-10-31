@@ -16,15 +16,15 @@ Commands
 
 ::
 
-    git gerrit-help              List commands.
-    git gerrit-query             Search gerrit.
-    git gerrit-fetch             Fetch by gerrit number.
     git gerrit-checkout          Fetch then checkout by gerrit number.
+    git gerrit-cherry-pick       Cherry pick from upstream branch by gerrit number.
+    git gerrit-fetch             Fetch by gerrit number.
+    git gerrit-help              List commands.
+    git gerrit-install-hooks     Install git hooks to create gerrit change-ids.
     git gerrit-log               Show oneline log with gerrit numbers.
+    git gerrit-query             Search gerrit.
     git gerrit-review            Submit review by gerrit number.
     git gerrit-unpicked          Find gerrit numbers on upstream branch not cherry picked.
-    git gerrit-cherry-pick       Cherry pick from upstream branch by gerrit number.
-    git gerrit-install-hooks     Install git hooks to create gerrit change-ids.
 
 .. end git-gerrit desc
 
@@ -255,22 +255,12 @@ Command git-gerrit-fetch::
 
 Command git-gerrit-help::
 
+    usage: git-gerrit-help [-h]
     
-    Commands for gerrit code review:
+    List commands.
     
-        git gerrit-help              List commands.
-        git gerrit-query             Search gerrit.
-        git gerrit-fetch             Fetch by gerrit number.
-        git gerrit-checkout          Fetch then checkout by gerrit number.
-        git gerrit-log               Show oneline log with gerrit numbers.
-        git gerrit-review            Submit review by gerrit number.
-        git gerrit-unpicked          Find gerrit numbers on upstream branch not cherry picked.
-        git gerrit-cherry-pick       Cherry pick from upstream branch by gerrit number.
-        git gerrit-install-hooks     Install git hooks to create gerrit change-ids.
-    
-    Show command details with:
-    
-        git gerrit-<command> -h
+    optional arguments:
+      -h, --help  show this help message and exit
 
 Command git-gerrit-install-hooks::
 
@@ -301,7 +291,7 @@ Command git-gerrit-log::
       -r, --reverse         reverse order
       -l, --long-hash       show full sha1 hash
     
-    format fields: number, hash, subject
+    Available --format template names: number, hash, subject
 
 Command git-gerrit-query::
 
@@ -362,7 +352,8 @@ Command git-gerrit-review::
 
 Command git-gerrit-unpicked::
 
-    usage: git-gerrit-unpicked [-h] [-u UPSTREAM_BRANCH] downstream_branch
+    usage: git-gerrit-unpicked [-h] [-u UPSTREAM_BRANCH] [-f <format>]
+                               downstream_branch
     
     Find gerrit numbers on upstream branch not cherry picked.
     
@@ -373,6 +364,9 @@ Command git-gerrit-unpicked::
       -h, --help            show this help message and exit
       -u UPSTREAM_BRANCH, --upstream-branch UPSTREAM_BRANCH
                             upstream branch name
+      -f <format>, --format <format>
+                            output format template (default: "{number} {hash}
+                            {subject}")
 
 
 

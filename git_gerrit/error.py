@@ -18,17 +18,20 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-class GerritError(Exception):
+class GitGerritError(Exception):
     pass
 
-class GerritConfigError(KeyError):
+class GitGerritConfigError(GitGerritError):
     def __init__(self, variable):
         self.variable = variable
         self.message = "Use 'git config gerrit.{0} <value>' "\
                        "to set the value of '{0}'.".format(variable)
 
-class GerritNotFoundError(GerritError):
+class GitGerritFormatError(GitGerritError):
+    pass # Unknown --format parameter
+
+class GitGerritNotFoundError(GitGerritError):
     pass
 
-class GerritHookDirNotFound(GerritError):
+class GitGerritHookDirNotFound(GitGerritError):
     pass

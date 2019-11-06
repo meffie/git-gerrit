@@ -48,10 +48,6 @@ review::
     $ git config gerrit.host <gerrit-hostname>
     $ git config gerrit.project <gerrit-project>
 
-Configure the format template string::
-
-    $ git config gerrit.queryformat "{number} {subject}"
-
 Install the Gerrit provided `commit-msg` git-hook and the git-gerrrit `prepare-commit-msg`
 git hook::
 

@@ -186,7 +186,8 @@ def git_gerrit_install_hooks(argv=None):
 
 def git_gerrit_log(argv=None):
     """ Show oneline log with gerrit numbers. """
-    template = '{number} {hash} {subject}'
+    config = git_gerrit.Config()
+    template = config.get('logformat', default='{number} {hash} {subject}')
     parser = argparse.ArgumentParser(
         prog='git-gerrit-log',
         description=git_gerrit_log.__doc__.strip(),
@@ -267,7 +268,8 @@ Examples:
 
 def git_gerrit_unpicked(argv=None):
     """ Find gerrit numbers on upstream branch not cherry picked. """
-    template = '{number} {hash} {subject}'
+    config = git_gerrit.Config()
+    template = config.get('unpickedformat', default='{number} {hash} {subject}')
     parser = argparse.ArgumentParser(
         prog='git-gerrit-unpicked',
         description=git_gerrit_unpicked.__doc__.strip())

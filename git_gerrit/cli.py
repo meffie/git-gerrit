@@ -82,7 +82,6 @@ def git_gerrit_checkout(argv=None):
     parser = argparse.ArgumentParser(
         prog='git-gerrit-checkout',
         description=git_gerrit_checkout.__doc__.strip())
-    parser.add_argument('--repodir', help='path to the git project directory', default=None)
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--branch', default=None,
                         help='local branch to create (default: gerrit/<number>/<patchset>)')
@@ -144,7 +143,6 @@ def git_gerrit_fetch(argv=None):
     parser = argparse.ArgumentParser(
         prog='git-gerrit-fetch',
         description=git_gerrit_fetch.__doc__.strip())
-    parser.add_argument('--repodir', help='path to the git project directory', default=None)
     parser.add_argument('--checkout', default=False, action='store_true',
                         help='checkout after fetch')
     group = parser.add_mutually_exclusive_group()
@@ -193,7 +191,6 @@ def git_gerrit_log(argv=None):
         prog='git-gerrit-log',
         description=git_gerrit_log.__doc__.strip(),
         epilog='Available --format template names: number, hash, subject')
-    parser.add_argument('--repodir', help='path to the git project directory', default=None)
     parser.add_argument('--format', default=template,
                         help='output format (default: "{0}")'.format(template))
     parser.add_argument('-n', '--number', type=int, help='number of commits')
@@ -218,7 +215,6 @@ def git_gerrit_query(argv=None):
         prog='git-gerrit-query',
         description=git_gerrit_query.__doc__.strip(),
         epilog="Available --format template names: "+', '.join(sorted(git_gerrit.CHANGE_FIELDS)))
-    parser.add_argument('--repodir', help='git project directory (default: current directory)')
     parser.add_argument('-n', '--number', dest='limit',metavar='<number>', type=int,
                         help='limit the number of results')
     parser.add_argument('-f', '--format', metavar='<format>', default=template,

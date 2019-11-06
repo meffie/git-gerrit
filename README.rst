@@ -185,21 +185,18 @@ Command help
 
 Command git-gerrit-checkout::
 
-    usage: git-gerrit-checkout [-h] [--repodir REPODIR]
-                               [--branch BRANCH | --no-branch]
-                               <number>
+    usage: git-gerrit-checkout [-h] [--branch BRANCH | --no-branch] <number>
     
     Fetch then checkout by gerrit number.
     
     positional arguments:
-      <number>           legacy change number
+      <number>         legacy change number
     
     optional arguments:
-      -h, --help         show this help message and exit
-      --repodir REPODIR  path to the git project directory
-      --branch BRANCH    local branch to create (default:
-                         gerrit/<number>/<patchset>)
-      --no-branch        do not create a local branch
+      -h, --help       show this help message and exit
+      --branch BRANCH  local branch to create (default:
+                       gerrit/<number>/<patchset>)
+      --no-branch      do not create a local branch
 
 Command git-gerrit-cherry-pick::
 
@@ -236,22 +233,20 @@ Command git-gerrit-cherry-pick::
 
 Command git-gerrit-fetch::
 
-    usage: git-gerrit-fetch [-h] [--repodir REPODIR] [--checkout]
-                            [--branch BRANCH | --no-branch]
+    usage: git-gerrit-fetch [-h] [--checkout] [--branch BRANCH | --no-branch]
                             <number>
     
     Fetch by gerrit number.
     
     positional arguments:
-      <number>           legacy change number
+      <number>         legacy change number
     
     optional arguments:
-      -h, --help         show this help message and exit
-      --repodir REPODIR  path to the git project directory
-      --checkout         checkout after fetch
-      --branch BRANCH    local branch to create (default:
-                         gerrit/<number>/<patchset>)
-      --no-branch        do not create a local branch
+      -h, --help       show this help message and exit
+      --checkout       checkout after fetch
+      --branch BRANCH  local branch to create (default:
+                       gerrit/<number>/<patchset>)
+      --no-branch      do not create a local branch
 
 Command git-gerrit-help::
 
@@ -273,9 +268,7 @@ Command git-gerrit-install-hooks::
 
 Command git-gerrit-log::
 
-    usage: git-gerrit-log [-h] [--repodir REPODIR] [--format FORMAT] [-n NUMBER]
-                          [-r] [-l]
-                          [revision]
+    usage: git-gerrit-log [-h] [--format FORMAT] [-n NUMBER] [-r] [-l] [revision]
     
     Show oneline log with gerrit numbers.
     
@@ -284,7 +277,6 @@ Command git-gerrit-log::
     
     optional arguments:
       -h, --help            show this help message and exit
-      --repodir REPODIR     path to the git project directory
       --format FORMAT       output format (default: "{number} {hash} {subject}")
       -n NUMBER, --number NUMBER
                             number of commits
@@ -295,8 +287,7 @@ Command git-gerrit-log::
 
 Command git-gerrit-query::
 
-    usage: git-gerrit-query [-h] [--repodir REPODIR] [-n <number>] [-f <format>]
-                            [--dump] [--details]
+    usage: git-gerrit-query [-h] [-n <number>] [-f <format>] [--dump] [--details]
                             <term> [<term> ...]
     
     Search gerrit.
@@ -306,7 +297,6 @@ Command git-gerrit-query::
     
     optional arguments:
       -h, --help            show this help message and exit
-      --repodir REPODIR     git project directory (default: current directory)
       -n <number>, --number <number>
                             limit the number of results
       -f <format>, --format <format>

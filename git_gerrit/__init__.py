@@ -256,12 +256,13 @@ def fetch(number, no_branch=False, branch=None, checkout=False, repodir=None):
         if branch is None:
             branch = 'gerrit/{0}/{1}'.format(number, change['patchset'])
         if _branch_exists(branch):
-            print('branch {0} already exists; remove it or try with --no-branch'.format(branch))
+            print('branch {0} already exists'.format(branch))
             return 1
+        patchset = change['patchset']
         refs = '{0}:{1}'.format(change['ref'], branch)
-        print('fetching {0} patchset {1} to branch {2}'.format(number, change['patchset'], branch))
+        print('fetching {0},{1} to branch {2}'.format(number, patchset, branch))
         git.fetch(url, refs, _cwd=repodir)
-        print('fetched {0} to branch {1}'.format(number, branch))
+        print('fetched {0},{1} to branch {2}'.format(number, patchset, branch))
         if checkout:
             git.checkout(branch, _cwd=repodir)
             print('checked out branch {0}'.format(branch))

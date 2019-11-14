@@ -191,7 +191,7 @@ Command git-gerrit-checkout::
     optional arguments:
       -h, --help       show this help message and exit
       --branch BRANCH  local branch to create (default:
-                       gerrit/<number>/<patchset>)
+                       gerrit/{number}/{patchset})
       --no-branch      do not create a local branch
 
 Command git-gerrit-cherry-pick::
@@ -241,7 +241,7 @@ Command git-gerrit-fetch::
       -h, --help       show this help message and exit
       --checkout       checkout after fetch
       --branch BRANCH  local branch to create (default:
-                       gerrit/<number>/<patchset>)
+                       gerrit/{number}/{patchset})
       --no-branch      do not create a local branch
 
 Command git-gerrit-help::

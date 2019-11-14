@@ -221,7 +221,7 @@ def current_change(number, repodir=None):
     change = changes[0]
     return change
 
-def fetch(number, no_branch=False, branch=None, checkout=False, repodir=None):
+def fetch(number, no_branch=False, branch='gerrit/{number}/{patchset}', checkout=False, repodir=None):
     """
     Fetch a gerrit by the legacy change number.
 
@@ -229,7 +229,7 @@ def fetch(number, no_branch=False, branch=None, checkout=False, repodir=None):
         number (int):     legacy gerrit number
         no_branch (bool): skip local branch when True
         branch (str):     local branch name to fetch to.
-                          default: 'gerrit/<number>/<patchset>'
+                          default: 'gerrit/{number}/{patchset}'
         checkout (bool):  checkout after fetch
         repodir (str):    local git repo directory (default: current)
     returns:
@@ -253,8 +253,10 @@ def fetch(number, no_branch=False, branch=None, checkout=False, repodir=None):
             git.checkout('FETCH_HEAD', _cwd=repodir)
             print('checked out FETCH_HEAD')
     else:
-        if branch is None:
-            branch = 'gerrit/{0}/{1}'.format(number, change['patchset'])
+        if not branch:
+            print('no branch specified')
+            return 1
+        branch = branch.format(**change)
         if _branch_exists(branch):
             print('branch {0} already exists'.format(branch))
             return 1
@@ -266,7 +268,6 @@ def fetch(number, no_branch=False, branch=None, checkout=False, repodir=None):
         if checkout:
             git.checkout(branch, _cwd=repodir)
             print('checked out branch {0}'.format(branch))
-
 
 def install_hooks():
     """

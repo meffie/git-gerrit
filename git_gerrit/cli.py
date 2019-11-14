@@ -79,12 +79,14 @@ def print_change(change, template='{number} {subject}', dump=False, out=None):
 
 def git_gerrit_checkout(argv=None):
     """ Fetch then checkout by gerrit number. """
+    config = git_gerrit.Config()
+    branch = config.get('checkoutbranch', 'gerrit/{number}/{patchset}')
     parser = argparse.ArgumentParser(
         prog='git-gerrit-checkout',
         description=git_gerrit_checkout.__doc__.strip())
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--branch', default=None,
-                        help='local branch to create (default: gerrit/<number>/<patchset>)')
+    group.add_argument('--branch', default=branch,
+                        help='local branch to create (default: {0})'.format(branch))
     group.add_argument('--no-branch', default=False, action='store_true',
                         help='do not create a local branch')
     parser.add_argument('number', metavar='<number>', type=int,
@@ -140,14 +142,16 @@ Example usage:
 
 def git_gerrit_fetch(argv=None):
     """ Fetch by gerrit number. """
+    config = git_gerrit.Config()
+    branch = config.get('fetchbranch', 'gerrit/{number}/{patchset}')
     parser = argparse.ArgumentParser(
         prog='git-gerrit-fetch',
         description=git_gerrit_fetch.__doc__.strip())
     parser.add_argument('--checkout', default=False, action='store_true',
                         help='checkout after fetch')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--branch', default=None,
-                        help='local branch to create (default: gerrit/<number>/<patchset>)')
+    group.add_argument('--branch', default=branch,
+                        help='local branch to create (default: {0})'.format(branch))
     group.add_argument('--no-branch', default=False, action='store_true',
                         help='do not create a local branch')
     parser.add_argument('number', metavar='<number>', type=int,

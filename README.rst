@@ -17,7 +17,7 @@ Commands
 ::
 
     git gerrit-checkout          Fetch then checkout by gerrit number.
-    git gerrit-cherry-pick       Cherry pick from upstream branch by gerrit number.
+    git gerrit-cherry-pick       Cherry pick from upstream branch by gerrit number to make a new gerrit.
     git gerrit-fetch             Fetch by gerrit number.
     git gerrit-help              List commands.
     git gerrit-install-hooks     Install git hooks to create gerrit change-ids.
@@ -193,12 +193,18 @@ Command git-gerrit-checkout::
       --branch BRANCH  local branch to create (default:
                        gerrit/{number}/{patchset})
       --no-branch      do not create a local branch
+    
+    Configuration variables:
+    
+      gerrit.host            Specifies the gerrit hostname (required).
+      gerrit.project         Specifies the gerrit project name (required).
+      gerrit.checkoutbranch  Default git-gerrit-checkout --branch value (optional).
 
 Command git-gerrit-cherry-pick::
 
     usage: git-gerrit-cherry-pick [-h] [-b <branch>] <number>
     
-    Cherry pick from upstream branch by gerrit number.
+    Cherry pick from upstream branch by gerrit number to make a new gerrit.
     
     positional arguments:
       <number>              legacy change number
@@ -208,24 +214,25 @@ Command git-gerrit-cherry-pick::
       -b <branch>, --branch <branch>
                             upstream branch (default: origin/master)
     
-    Note: A new gerrit Change-Id will be created in the cherry-picked commit.
+    Notes:
     
-    Example usage:
+    This command will create a new gerrit Change-Id in the new cherry-picked commit
+    if the git hooks have been installed with git-gerrit-install-hooks
     
-        $ git gerrit-query is:merged branch:master 'fix the frobinator'
-        1234 fix the frobinator
+    Example:
     
-        $ git fetch origin
-        $ git checkout -b fix origin/the-stable-branch
-        ...
-    
-        $ git gerrit-cherry-pick 1234 -b origin/master
-        [fix f378563c94] fix the frobinator
-         Date: Fri Apr 4 10:27:10 2014 -0400
-          2 files changed, 37 insertions(+), 12 deletions(-)
-    
-        $ git push gerrit HEAD:refs/for/the-stable-branch
-        ...
+      $ git gerrit-install-hooks
+      $ git gerrit-query is:merged branch:master 'fix the frobinator'
+      1234 fix the frobinator
+      ...
+      $ git fetch origin
+      $ git checkout -b fix origin/the-stable-branch
+      ...
+      $ git gerrit-cherry-pick 1234 -b origin/master
+      [fix f378563c94] fix the frobinator
+      Date: Fri Apr 4 10:27:10 2014 -0400
+      2 files changed, 37 insertions(+), 12 deletions(-)
+      $ git push gerrit HEAD:refs/for/the-stable-branch
 
 Command git-gerrit-fetch::
 
@@ -243,6 +250,12 @@ Command git-gerrit-fetch::
       --branch BRANCH  local branch to create (default:
                        gerrit/{number}/{patchset})
       --no-branch      do not create a local branch
+    
+    Configuration variables:
+    
+      gerrit.host           Specifies the gerrit hostname (required).
+      gerrit.project        Specifies the gerrit project name (required).
+      gerrit.fetchbranch    Default git-gerrit-fetch --branch value (optional).
 
 Command git-gerrit-help::
 
@@ -261,6 +274,10 @@ Command git-gerrit-install-hooks::
     
     optional arguments:
       -h, --help  show this help message and exit
+    
+    Configuration variables:
+    
+      gerrit.host           Specifies the gerrit hostname (required).
 
 Command git-gerrit-log::
 
@@ -279,7 +296,11 @@ Command git-gerrit-log::
       -r, --reverse         reverse order
       -l, --long-hash       show full sha1 hash
     
-    Available --format template names: number, hash, subject
+    Available --format template fields: number, hash, subject
+    
+    Configuration variables:
+    
+      gerrit.queryformat    Default git-gerrit-query --format value (optional).
 
 Command git-gerrit-query::
 
@@ -300,10 +321,17 @@ Command git-gerrit-query::
       --dump                debug data dump
       --details             get extra details for debug --dump
     
-    Available --format template names: branch, change_id, created,
-    current_revision, deletions, hash, hashtags, host, id, insertions, number,
-    owner, patchset, project, ref, status, subject, submittable, submitted, topic,
-    updated, url
+    Available --format template fields:
+    
+    branch, change_id, created, current_revision, deletions, hash,
+    hashtags, host, id, insertions, number, owner, patchset, project, ref,
+    status, subject, submittable, submitted, topic, updated, url
+    
+    Configuration variables:
+    
+      gerrit.host           Specifies the gerrit hostname (required).
+      gerrit.project        Specifies the gerrit project name (required).
+      gerrit.queryformat    Default git-gerrit-query --format value (optional).
 
 Command git-gerrit-review::
 
@@ -328,13 +356,19 @@ Command git-gerrit-review::
       --abandon             Set status to abandoned
       --restore             Set status to open
       --add-reviewer <email>
-                            Invite reviewer (this option may be given more than once)
+                            Invite reviewer (this option may be given more than
+                            once)
     
     Examples:
     
-        $ git gerrit-review --message="Good Job" --code-review="+1" 12345
-        $ git gerrit-review --message="Works for me" --verified="+1" 12345
-        $ git gerrit-review --add-reviewer="tycobb@yoyodyne.com" --add-reviewer="foo@bar.com" 12345
+      $ git gerrit-review --message="Good Job" --code-review="+1" 12345
+      $ git gerrit-review --message="Works for me" --verified="+1" 12345
+      $ git gerrit-review --add-reviewer="tycobb@yoyodyne.com" --add-reviewer="foo@bar.com" 12345
+    
+    Configuration variables:
+    
+      gerrit.host           Specifies the gerrit hostname (required).
+      gerrit.project        Specifies the gerrit project name (required).
 
 Command git-gerrit-unpicked::
 
@@ -353,6 +387,10 @@ Command git-gerrit-unpicked::
       -f <format>, --format <format>
                             output format template (default: "{number} {hash}
                             {subject}")
+    
+    Configuration variables:
+    
+      gerrit.unpickedformat    Default git-gerrit-query --format value (optional).
 
 
 

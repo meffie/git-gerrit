@@ -23,6 +23,7 @@
 import sys
 import argparse
 import pprint
+import textwrap
 
 import git_gerrit
 from git_gerrit.unicode import asciitize, cook
@@ -82,8 +83,16 @@ def git_gerrit_checkout(argv=None):
     config = git_gerrit.Config()
     branch = config.get('checkoutbranch', 'gerrit/{number}/{patchset}')
     parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-checkout',
-        description=git_gerrit_checkout.__doc__.strip())
+        description=git_gerrit_checkout.__doc__.strip(),
+        epilog="""
+Configuration variables:
+
+  gerrit.host            Specifies the gerrit hostname (required).
+  gerrit.project         Specifies the gerrit project name (required).
+  gerrit.checkoutbranch  Default git-gerrit-checkout --branch value (optional).
+""")
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--branch', default=branch,
                         help='local branch to create (default: {0})'.format(branch))
@@ -101,30 +110,31 @@ def git_gerrit_checkout(argv=None):
         return 1
 
 def git_gerrit_cherry_pick(argv=None):
-    """ Cherry pick from upstream branch by gerrit number. """
+    """ Cherry pick from upstream branch by gerrit number to make a new gerrit."""
     parser = argparse.ArgumentParser(
-        prog='git-gerrit-cherry-pick',
         formatter_class=argparse.RawDescriptionHelpFormatter,
+        prog='git-gerrit-cherry-pick',
         description=git_gerrit_cherry_pick.__doc__.strip(),
-        epilog="""\
-Note: A new gerrit Change-Id will be created in the cherry-picked commit.
+        epilog="""
+Notes:
 
-Example usage:
+This command will create a new gerrit Change-Id in the new cherry-picked commit
+if the git hooks have been installed with git-gerrit-install-hooks
 
-    $ git gerrit-query is:merged branch:master 'fix the frobinator'
-    1234 fix the frobinator
+Example:
 
-    $ git fetch origin
-    $ git checkout -b fix origin/the-stable-branch
-    ...
-
-    $ git gerrit-cherry-pick 1234 -b origin/master
-    [fix f378563c94] fix the frobinator
-     Date: Fri Apr 4 10:27:10 2014 -0400
-      2 files changed, 37 insertions(+), 12 deletions(-)
-
-    $ git push gerrit HEAD:refs/for/the-stable-branch
-    ...
+  $ git gerrit-install-hooks
+  $ git gerrit-query is:merged branch:master 'fix the frobinator'
+  1234 fix the frobinator
+  ...
+  $ git fetch origin
+  $ git checkout -b fix origin/the-stable-branch
+  ...
+  $ git gerrit-cherry-pick 1234 -b origin/master
+  [fix f378563c94] fix the frobinator
+  Date: Fri Apr 4 10:27:10 2014 -0400
+  2 files changed, 37 insertions(+), 12 deletions(-)
+  $ git push gerrit HEAD:refs/for/the-stable-branch
 """)
     parser.add_argument('-b', '--branch', metavar='<branch>',
                         help='upstream branch (default: origin/master)',
@@ -145,8 +155,16 @@ def git_gerrit_fetch(argv=None):
     config = git_gerrit.Config()
     branch = config.get('fetchbranch', 'gerrit/{number}/{patchset}')
     parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-fetch',
-        description=git_gerrit_fetch.__doc__.strip())
+        description=git_gerrit_fetch.__doc__.strip(),
+        epilog="""
+Configuration variables:
+
+  gerrit.host           Specifies the gerrit hostname (required).
+  gerrit.project        Specifies the gerrit project name (required).
+  gerrit.fetchbranch    Default git-gerrit-fetch --branch value (optional).
+""")
     parser.add_argument('--checkout', default=False, action='store_true',
                         help='checkout after fetch')
     group = parser.add_mutually_exclusive_group()
@@ -167,6 +185,7 @@ def git_gerrit_fetch(argv=None):
 def git_gerrit_help(argv=None):
     """ List commands. """
     parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-help',
         description=git_gerrit_help.__doc__.strip())
     parser.parse_args(argv)
@@ -179,8 +198,14 @@ def git_gerrit_help(argv=None):
 def git_gerrit_install_hooks(argv=None):
     """ Install git hooks to create gerrit change-ids. """
     parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-install-hooks',
-        description=git_gerrit_install_hooks.__doc__.strip())
+        description=git_gerrit_install_hooks.__doc__.strip(),
+        epilog="""
+Configuration variables:
+
+  gerrit.host           Specifies the gerrit hostname (required).
+""")
     vars(parser.parse_args(argv))
     try:
         git_gerrit.install_hooks()
@@ -193,9 +218,16 @@ def git_gerrit_log(argv=None):
     config = git_gerrit.Config()
     template = config.get('logformat', default='{number} {hash} {subject}')
     parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-log',
         description=git_gerrit_log.__doc__.strip(),
-        epilog='Available --format template names: number, hash, subject')
+        epilog="""
+Available --format template fields: number, hash, subject
+
+Configuration variables:
+
+  gerrit.queryformat    Default git-gerrit-query --format value (optional).
+""")
     parser.add_argument('--format', default=template,
                         help='output format (default: "{0}")'.format(template))
     parser.add_argument('-n', '--number', type=int, help='number of commits')
@@ -216,10 +248,23 @@ def git_gerrit_query(argv=None):
     """ Search gerrit. """
     config = git_gerrit.Config()
     template = config.get('queryformat', default='{number} {subject}')
+    fields_help = textwrap.fill(', '.join(sorted(git_gerrit.CHANGE_FIELDS)))
     parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-query',
         description=git_gerrit_query.__doc__.strip(),
-        epilog="Available --format template names: "+', '.join(sorted(git_gerrit.CHANGE_FIELDS)))
+        epilog="""
+Available --format template fields:
+
+{0}
+
+Configuration variables:
+
+  gerrit.host           Specifies the gerrit hostname (required).
+  gerrit.project        Specifies the gerrit project name (required).
+  gerrit.queryformat    Default git-gerrit-query --format value (optional).
+""".format(fields_help))
+
     parser.add_argument('-n', '--number', dest='limit',metavar='<number>', type=int,
                         help='limit the number of results')
     parser.add_argument('-f', '--format', metavar='<format>', default=template,
@@ -241,15 +286,20 @@ def git_gerrit_query(argv=None):
 def git_gerrit_review(argv=None):
     """ Submit review by gerrit number. """
     parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-review',
         description=git_gerrit_review.__doc__.strip(),
-        formatter_class=argparse.RawTextHelpFormatter,
-        epilog="""\
+        epilog="""
 Examples:
 
-    $ git gerrit-review --message="Good Job" --code-review="+1" 12345
-    $ git gerrit-review --message="Works for me" --verified="+1" 12345
-    $ git gerrit-review --add-reviewer="tycobb@yoyodyne.com" --add-reviewer="foo@bar.com" 12345
+  $ git gerrit-review --message="Good Job" --code-review="+1" 12345
+  $ git gerrit-review --message="Works for me" --verified="+1" 12345
+  $ git gerrit-review --add-reviewer="tycobb@yoyodyne.com" --add-reviewer="foo@bar.com" 12345
+
+Configuration variables:
+
+  gerrit.host           Specifies the gerrit hostname (required).
+  gerrit.project        Specifies the gerrit project name (required).
 """
     )
     parser.add_argument('--branch', default=None, metavar='<branch>', help='Branch name')
@@ -275,8 +325,14 @@ def git_gerrit_unpicked(argv=None):
     config = git_gerrit.Config()
     template = config.get('unpickedformat', default='{number} {hash} {subject}')
     parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-unpicked',
-        description=git_gerrit_unpicked.__doc__.strip())
+        description=git_gerrit_unpicked.__doc__.strip(),
+        epilog="""
+Configuration variables:
+
+  gerrit.unpickedformat    Default git-gerrit-query --format value (optional).
+""")
     parser.add_argument('-u', '--upstream-branch',  help='upstream branch name', default='HEAD')
     parser.add_argument('downstream_branch', help='downstream branch name')
     parser.add_argument('-f', '--format', metavar='<format>', default=template,

@@ -324,8 +324,9 @@ Command git-gerrit-query::
     Available --format template fields:
     
     branch, change_id, created, current_revision, deletions, hash,
-    hashtags, host, id, insertions, number, owner, patchset, project, ref,
-    status, subject, submittable, submitted, topic, updated, url
+    hashtags, host, id, insertions, localref, number, owner, patchset,
+    project, ref, status, subject, submittable, submitted, topic, updated,
+    url
     
     Configuration variables:
     

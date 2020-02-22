@@ -84,6 +84,7 @@ CHANGE_FIELDS = [
     'number',
     'patchset',
     'ref',
+    'localref',
     'hash',
     'host',
     'url',
@@ -378,6 +379,7 @@ def query(search, limit=None, details=False, repodir=None, **options):
             params.append(('o', option.upper()))
     query = '/changes/?{0}'.format(urlencode(params))
 
+    remote = config.get('remote', default='origin')
     url = "https://{0}".format(config['host'])
     gerrit = pygerrit2.rest.GerritRestAPI(url)
     for change in gerrit.get(query):
@@ -385,6 +387,7 @@ def query(search, limit=None, details=False, repodir=None, **options):
         change['hash'] = change['current_revision'] # alias
         change['patchset'] = change['revisions'][change['current_revision']]['_number']
         change['ref'] = change['revisions'][change['current_revision']]['ref']
+        change['localref'] = change['ref'].replace('refs/', remote+'/')
         change['host'] = config['host']
         change['url'] = "https://{0}/{1}".format(config['host'], change['_number'])
         if not 'topic' in change:

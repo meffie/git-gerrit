@@ -227,6 +227,7 @@ Available --format template fields: number, hash, subject
 Configuration variables:
 
   gerrit.queryformat    Default git-gerrit-query --format value (optional).
+  gerrit.remote         Remote name of the localref --format field (default: origin)
 """)
     parser.add_argument('--format', default=template,
                         help='output format (default: "{0}")'.format(template))
@@ -263,6 +264,7 @@ Configuration variables:
   gerrit.host           Specifies the gerrit hostname (required).
   gerrit.project        Specifies the gerrit project name (required).
   gerrit.queryformat    Default git-gerrit-query --format value (optional).
+  gerrit.remote         Remote name of the localref --format field (default: origin)
 """.format(fields_help))
 
     parser.add_argument('-n', '--number', dest='limit',metavar='<number>', type=int,

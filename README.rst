@@ -301,6 +301,7 @@ Command git-gerrit-log::
     Configuration variables:
     
       gerrit.queryformat    Default git-gerrit-query --format value (optional).
+      gerrit.remote         Remote name of the localref --format field (default: origin)
 
 Command git-gerrit-query::
 
@@ -333,6 +334,7 @@ Command git-gerrit-query::
       gerrit.host           Specifies the gerrit hostname (required).
       gerrit.project        Specifies the gerrit project name (required).
       gerrit.queryformat    Default git-gerrit-query --format value (optional).
+      gerrit.remote         Remote name of the localref --format field (default: origin)
 
 Command git-gerrit-review::
 

@@ -58,7 +58,7 @@ Examples
 
 Setup a local OpenAFS git repo::
 
-    $ git clone git://git.openafs.org/openeafs.git # (if not already cloned)
+    $ git clone git://git.openafs.org/openafs.git # (if not already cloned)
     $ cd openafs
     $ git config --local gerrit.host gerrit.openafs.org
     $ git config --local gerrit.project openafs

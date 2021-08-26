@@ -199,8 +199,7 @@ def cherry_pick(number, branch='origin/master', repodir=None):
     env['GERRIT_CHERRY_PICK'] = 'yes'
     code = 0
     try:
-        output = git('cherry-pick', '-x', hash, _env=env)
-        sys.stdout.write(output.stdout)
+        print(git('cherry-pick', '-x', hash, _env=env))
     except sh.ErrorReturnCode as e:
         sys.stderr.write('Failed to cherry-pick {0}\n{1}\n'.format(hash, e.stderr))
         code = e.exit_code

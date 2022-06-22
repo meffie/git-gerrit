@@ -96,7 +96,7 @@ Configuration variables:
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--branch', default=branch,
                         help='local branch to create (default: {0})'.format(branch))
-    group.add_argument('--no-branch', default=False, action='store_true',
+    group.add_argument('--no-branch', default=config.getbool('no-branch'), action='store_true',
                         help='do not create a local branch')
     parser.add_argument('number', metavar='<number>', type=int,
                         help='legacy change number')
@@ -170,7 +170,7 @@ Configuration variables:
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--branch', default=branch,
                         help='local branch to create (default: {0})'.format(branch))
-    group.add_argument('--no-branch', default=False, action='store_true',
+    group.add_argument('--no-branch', default=config.getbool('no-branch'), action='store_true',
                         help='do not create a local branch')
     parser.add_argument('number', metavar='<number>', type=int,
                         help='legacy change number')

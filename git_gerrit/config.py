@@ -43,8 +43,21 @@ class Config:
         return value
 
     def get(self, variable, default=None):
-        """Get a value or return a default if misssing."""
+        """Get a value or return a default if missing."""
         value = self._get(variable)
         if not value:
             value = default
         return value
+
+    def getbool(self, variable, default=False):
+        """Get a boolean value or return a default if missing."""
+        value = self.get(variable, default)
+        if value is None:
+            return False
+        if isinstance(value, bool):
+            return value
+        if value.lower() in ('yes', 'true', '1', 'on', 'enable'):
+            return True
+        if value.lower() in ('no', 'false', '0', 'off', 'disable'):
+            return False
+        raise ValueError('Invalid boolean in git configuration: %s' % (variable))

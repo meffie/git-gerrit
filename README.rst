@@ -199,6 +199,7 @@ Command git-gerrit-checkout::
       gerrit.host            Specifies the gerrit hostname (required).
       gerrit.project         Specifies the gerrit project name (required).
       gerrit.checkoutbranch  Default git-gerrit-checkout --branch value (optional).
+      gerrit.no-branch       Do not create local branches (yes/no) (optional).
 
 Command git-gerrit-cherry-pick::
 
@@ -256,6 +257,7 @@ Command git-gerrit-fetch::
       gerrit.host           Specifies the gerrit hostname (required).
       gerrit.project        Specifies the gerrit project name (required).
       gerrit.fetchbranch    Default git-gerrit-fetch --branch value (optional).
+      gerrit.no-branch      Do not create local branches (yes/no) (optional).
 
 Command git-gerrit-help::
 

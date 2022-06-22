@@ -27,9 +27,9 @@ def version():
 
 NAME = name()
 VERSION = version()
-PYTHON = which('python')
-PYFLAKES = which('pyflakes')
-PIP = which('pip')
+PYTHON = which('python3')
+PYFLAKES = which('pyflakes3')
+PIP = which('pip3')
 INSTALL = 'pip' if PIP != 'missing' else 'setup'
 
 print("""

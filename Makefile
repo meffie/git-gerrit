@@ -4,6 +4,8 @@
 # perform development tasks.
 #
 
+PYTHON=/usr/bin/python3
+
 help:
 	@echo "usage: make <target> [<target> ...]"
 	@echo "packaging:"
@@ -29,7 +31,7 @@ help:
 	@echo "  distclean      delete generated and config files"
 
 Makefile.config: configure.py
-	python configure.py >$@
+	$(PYTHON) configure.py >$@
 
 include Makefile.config
 

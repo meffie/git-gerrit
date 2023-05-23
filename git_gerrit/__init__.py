@@ -315,7 +315,7 @@ def log(number=None, reverse=False, shorthash=True, revision=None, repodir=None)
         revision (str):   git revision to log (default is HEAD)
         repodir (str):    local git repo directory (default: current)
     yields:
-        dictionary with keys: 'hash', 'subject', 'number'
+        dictionary with keys: 'hash', 'subject', 'number', 'author', 'email'
     """
     git = sh.Command('git').bake(_cwd=repodir, _tty_out=False)
 
@@ -328,13 +328,13 @@ def log(number=None, reverse=False, shorthash=True, revision=None, repodir=None)
     else:
         hashfmt = '%H'
     options = {}
-    options['pretty'] = 'hash:{0}%nsubject:%s%n%n%b%%%%'.format(hashfmt)
+    options['pretty'] = 'hash:{0}%nsubject:%s%nauthor:%an%nemail:%ae%n%b%%%%'.format(hashfmt)
     options['reverse'] = reverse
     if number:
         options['max-count'] = number
     options['_iter'] = True
 
-    fields = {'hash':'', 'subject':'', 'number':'-'}
+    fields = {'hash':'', 'subject':'', 'number':'-', 'author': '', 'email': ''}
     for line in git.log(*args, **options):
         line = cook(line)
         line = line.strip()
@@ -346,6 +346,14 @@ def log(number=None, reverse=False, shorthash=True, revision=None, repodir=None)
         if m:
             fields['subject'] = m.group(1)
             continue
+        m = re.match(r'^author:(.*)', line)
+        if m:
+            fields['author'] = m.group(1)
+            continue
+        m = re.match(r'^email:(.*)', line)
+        if m:
+            fields['email'] = m.group(1)
+            continue
         m = re.match(r'^Reviewed-on: .*/([0-9]+)$', line)
         if m:
             fields['number'] = int(m.group(1)) # get last one
@@ -353,7 +361,7 @@ def log(number=None, reverse=False, shorthash=True, revision=None, repodir=None)
         m = re.match(r'^%%$', line)
         if m:
             yield fields
-            fields = {'hash':'', 'subject':'', 'number':'-'}
+            fields = {'hash':'', 'subject':'', 'number':'-', 'author': '', 'email': ''}
 
 def query(search, limit=None, details=False, repodir=None, **options):
     """Search gerrit for changes.

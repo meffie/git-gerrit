@@ -31,15 +31,31 @@ Commands
 Installation
 ============
 
-Install with `pip`::
+Install with `pipx`_::
 
-    $ pip install --user git-gerrit
+    $ pipx install git-gerrit
 
-Install from source::
+Be sure your ``PATH`` has been updated to run **pipx** installed commands::
+
+    $ pipx ensurepath
+
+If **pipx** is not available for your system, then install in a local
+virtualenv::
+
+    $ python3 -m venv .venv
+    $ . .venv/bin/activate
+    (.venv) $ pip install git-gerrit
+
+To install from source::
 
     $ git clone https://github.com/meffie/git-gerrit.git
     $ cd git-gerrit
     $ make install
+
+.. _pipx: https://pipx.pypa.io/stable/
+
+Setup
+=====
 
 Set the Gerrit host and project names in your local git repo under Gerrit code
 review::
@@ -48,7 +64,7 @@ review::
     $ git config gerrit.host <gerrit-hostname>
     $ git config gerrit.project <gerrit-project>
 
-Install the Gerrit provided `commit-msg` git-hook and the git-gerrrit `prepare-commit-msg`
+Install the Gerrit provided ``commit-msg`` git-hook and the git-gerrrit ``prepare-commit-msg``
 git hook::
 
     $ git gerrit-install-hooks
@@ -407,4 +423,3 @@ See Also
 See the `git-review`_ project for a more complete git/gerrit workflow tool.
 
 .. _git-review: https://www.mediawiki.org/wiki/Gerrit/git-review
-

@@ -48,11 +48,8 @@ from git_gerrit.error import GitGerritConfigError
 from git_gerrit.error import GitGerritFormatError
 from git_gerrit.error import GitGerritNotFoundError
 from git_gerrit.error import GitGerritHookDirNotFound
-try:
-    from git_gerrit import _version
-    VERSION = _version.__version__
-except ImportError:
-    VERSION = None
+
+VERSION = "1.8.5"
 
 _hush_linter = [
     GitGerritError,

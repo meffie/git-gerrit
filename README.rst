@@ -27,6 +27,8 @@ Commands
 Installation
 ============
 
+.. _pipx: https://pipx.pypa.io/stable/
+
 Install with `pipx`_::
 
     $ pipx install git-gerrit
@@ -35,20 +37,14 @@ Be sure your ``PATH`` has been updated to run **pipx** installed commands::
 
     $ pipx ensurepath
 
-If **pipx** is not available for your system, then install in a local
-virtualenv::
+If **pipx** is not available, then install in a project local virtualenv::
 
+    $ cd <my-project-directory>
     $ python3 -m venv .venv
-    $ . .venv/bin/activate
+    $ source .venv/bin/activate
+    (.venv) $ pip install -U pip setuptools
     (.venv) $ pip install git-gerrit
 
-To install from source::
-
-    $ git clone https://github.com/meffie/git-gerrit.git
-    $ cd git-gerrit
-    $ make install
-
-.. _pipx: https://pipx.pypa.io/stable/
 
 Setup
 =====
@@ -56,7 +52,7 @@ Setup
 Set the Gerrit host and project names in your local git repo under Gerrit code
 review::
 
-    $ cd <your-git-directory>
+    $ cd <my-project-directory>
     $ git config gerrit.host <gerrit-hostname>
     $ git config gerrit.project <gerrit-project>
 
@@ -111,8 +107,6 @@ Find the branch names of gerrits with the subject containing the term 'debuginfo
                   master 13030 redhat: Make separate debuginfo for kmods work with recent rpm
     openafs-stable-1_6_x 13029 redhat: Create unique debuginfo packages for kmods
     openafs-stable-1_6_x 12818 redhat: separate debuginfo package for kmod rpm
-
-
 
 List the gerrit topics on a branch::
 

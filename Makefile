@@ -23,7 +23,6 @@ help:
 	@echo "  uninstall-dev  developer mode uninstall"
 	@echo "development:"
 	@echo "  lint           run python linter"
-	@echo "  readme         generate the readme file"
 	@echo "  scripts        generate the wrapper scripts"
 	@echo "  checkdocs      check syntax of documentation files"
 	@echo "  test           run unit tests"
@@ -44,10 +43,6 @@ generated: Makefile.config $(NAME)/_version.py
 .PHONY: lint
 lint: generated
 	$(PYFLAKES) $(NAME)/*.py
-
-.PHONY: readme
-readme:
-	$(PYTHON) genreadme.py
 
 .PHONY: scripts
 scripts:

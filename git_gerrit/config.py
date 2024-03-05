@@ -24,6 +24,7 @@ from sh.contrib import git
 from sh import ErrorReturnCode_1
 from git_gerrit.error import GitGerritConfigError
 
+
 class Config:
     def __init__(self, repodir=None):
         self.repodir = repodir

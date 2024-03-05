@@ -24,6 +24,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 import sys
 
+
 def cook(raw):
     """Convert raw string to unicode string.
 
@@ -49,6 +50,7 @@ def cook(raw):
         else:
             cooked = raw
     return cooked
+
 
 def asciitize(text):
     """Remove non-ascii chars from strings.

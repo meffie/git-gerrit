@@ -58,6 +58,8 @@ def asciitize(text):
     """
     if sys.version_info[0] < 3:
         # python 2
+        if sys.version_info[0] != 2:
+            unicode = None  # hush pyflakes
         if isinstance(text, unicode):
             text = text.encode('ascii', 'ignore')
         if isinstance(text, str):

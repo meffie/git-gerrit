@@ -34,6 +34,7 @@ import sys
 
 import pygerrit2.rest
 import sh
+
 try:
     from urllib.parse import urlencode
     from urllib.request import urlretrieve
@@ -102,18 +103,28 @@ sed -i '/^Change-Id:/d' "$1"
 .git/hooks/commit-msg "$1"
 """
 
+
 def _chmod(filename, mode):
     """
     Wrapper for os.chmod(); converts rwx... string to mode bits.
     """
-    bit = [stat.S_IRUSR, stat.S_IWUSR, stat.S_IXUSR,
-           stat.S_IRGRP, stat.S_IWGRP, stat.S_IXGRP,
-           stat.S_IROTH, stat.S_IWOTH, stat.S_IXOTH]
+    bit = [
+        stat.S_IRUSR,
+        stat.S_IWUSR,
+        stat.S_IXUSR,
+        stat.S_IRGRP,
+        stat.S_IWGRP,
+        stat.S_IXGRP,
+        stat.S_IROTH,
+        stat.S_IWOTH,
+        stat.S_IXOTH,
+    ]
     bits = 0
     for i, char in enumerate('rwxrwxrwx'):
         if mode[i] == char:
             bits |= bit[i]
     os.chmod(filename, bits)
+
 
 def _branch_exists(branch, repodir=None):
     """
@@ -126,6 +137,7 @@ def _branch_exists(branch, repodir=None):
     except sh.ErrorReturnCode:
         return False
 
+
 def _get_hashes(branch, repodir=None):
     """
     Returns the commit sha1 hashes for the given branch as a set().
@@ -136,6 +148,7 @@ def _get_hashes(branch, repodir=None):
         line = line.rstrip()
         hashes.add(line)
     return hashes
+
 
 def _get_cherry_picked(branch, repodir=None):
     """
@@ -159,7 +172,7 @@ def _get_cherry_picked(branch, repodir=None):
             continue
         m = re.match(r'\s+\(cherry picked from commit (\w+)\)', line)
         if m:
-            from_ = m.group(1) # Save the last one see in this commit message.
+            from_ = m.group(1)  # Save the last one see in this commit message.
     if to_ and from_:
         picked[to_] = from_
     return picked
@@ -184,8 +197,8 @@ def cherry_pick(number, branch='origin/master', repodir=None):
             break
     if not hash:
         sys.stderr.write(
-            'Failed to find gerrit number {0} on branch {1}.\n'\
-            .format(number, branch))
+            'Failed to find gerrit number {0} on branch {1}.\n'.format(number, branch)
+        )
         return 1
 
     # We want to generate a new gerrit Change-Id for this commit.  Set the
@@ -202,6 +215,7 @@ def cherry_pick(number, branch='origin/master', repodir=None):
         code = e.exit_code
     return code
 
+
 def current_change(number, repodir=None):
     """
     Look up the current change in gerrit.
@@ -212,13 +226,24 @@ def current_change(number, repodir=None):
     returns:
         a current change dictionary (including the current patchset number)
     """
-    changes = list(query('change:{0}'.format(number), limit=1, current_revision=True, repodir=repodir))
+    changes = list(
+        query(
+            'change:{0}'.format(number), limit=1, current_revision=True, repodir=repodir
+        )
+    )
     if not changes or len(changes) != 1:
         raise GitGerritNotFoundError('gerrit {0} not found'.format(number))
     change = changes[0]
     return change
 
-def fetch(number, no_branch=False, branch='gerrit/{number}/{patchset}', checkout=False, repodir=None):
+
+def fetch(
+    number,
+    no_branch=False,
+    branch='gerrit/{number}/{patchset}',
+    checkout=False,
+    repodir=None,
+):
     """
     Fetch a gerrit by the legacy change number.
 
@@ -266,6 +291,7 @@ def fetch(number, no_branch=False, branch='gerrit/{number}/{patchset}', checkout
             git.checkout(branch, _cwd=repodir)
             print('checked out branch {0}'.format(branch))
 
+
 def install_hooks():
     """
     Install git hooks for Gerrit and Git-Gerrit.
@@ -300,6 +326,7 @@ def install_hooks():
 
     return 0
 
+
 def log(number=None, reverse=False, shorthash=True, revision=None, repodir=None):
     """
     Retrieve log entries with gerrit numbers (extracted from the commit
@@ -325,13 +352,15 @@ def log(number=None, reverse=False, shorthash=True, revision=None, repodir=None)
     else:
         hashfmt = '%H'
     options = {}
-    options['pretty'] = 'hash:{0}%nsubject:%s%nauthor:%an%nemail:%ae%n%b%%%%'.format(hashfmt)
+    options['pretty'] = 'hash:{0}%nsubject:%s%nauthor:%an%nemail:%ae%n%b%%%%'.format(
+        hashfmt
+    )
     options['reverse'] = reverse
     if number:
         options['max-count'] = number
     options['_iter'] = True
 
-    fields = {'hash':'', 'subject':'', 'number':'-', 'author': '', 'email': ''}
+    fields = {'hash': '', 'subject': '', 'number': '-', 'author': '', 'email': ''}
     for line in git.log(*args, **options):
         line = cook(line)
         line = line.strip()
@@ -353,12 +382,19 @@ def log(number=None, reverse=False, shorthash=True, revision=None, repodir=None)
             continue
         m = re.match(r'^Reviewed-on: .*/([0-9]+)$', line)
         if m:
-            fields['number'] = int(m.group(1)) # get last one
+            fields['number'] = int(m.group(1))  # get last one
             continue
         m = re.match(r'^%%$', line)
         if m:
             yield fields
-            fields = {'hash':'', 'subject':'', 'number':'-', 'author': '', 'email': ''}
+            fields = {
+                'hash': '',
+                'subject': '',
+                'number': '-',
+                'author': '',
+                'email': '',
+            }
+
 
 def query(search, limit=None, details=False, repodir=None, **options):
     """Search gerrit for changes.
@@ -388,10 +424,10 @@ def query(search, limit=None, details=False, repodir=None, **options):
     gerrit = pygerrit2.rest.GerritRestAPI(url)
     for change in gerrit.get(query):
         change['number'] = change['_number']
-        change['hash'] = change['current_revision'] # alias
+        change['hash'] = change['current_revision']  # alias
         change['patchset'] = change['revisions'][change['current_revision']]['_number']
         change['ref'] = change['revisions'][change['current_revision']]['ref']
-        change['localref'] = change['ref'].replace('refs/', remote+'/')
+        change['localref'] = change['ref'].replace('refs/', remote + '/')
         change['host'] = config['host']
         change['url'] = "https://{0}/{1}".format(config['host'], change['_number'])
         if not 'topic' in change:
@@ -401,11 +437,20 @@ def query(search, limit=None, details=False, repodir=None, **options):
             change['details'] = gerrit.get('/changes/{0}/detail'.format(change_id))
         yield change
 
-def review(number, repodir=None, branch=None,
-           message=None, code_review=None, verified=None,
-           abandon=False, restore=False,
-           add_reviewers=None, verbose=False):
-    """ Submit review to gerrit using the ssh command line interface.
+
+def review(
+    number,
+    repodir=None,
+    branch=None,
+    message=None,
+    code_review=None,
+    verified=None,
+    abandon=False,
+    restore=False,
+    add_reviewers=None,
+    verbose=False,
+):
+    """Submit review to gerrit using the ssh command line interface.
 
     Note: This method requires authentication. Create a gerrit account and
     import your ssh public key. See the Gerrit documentation.
@@ -421,7 +466,7 @@ def review(number, repodir=None, branch=None,
     returns:
         None
     """
-    if (abandon and restore):
+    if abandon and restore:
         raise ValueError('Specify only one of "abandon" or "restore".')
     if add_reviewers is None:
         add_reviewers = []
@@ -434,9 +479,9 @@ def review(number, repodir=None, branch=None,
 
     def arg(name, value):
         if value is True:
-            args.append('--'+name)
+            args.append('--' + name)
         elif value:
-            args.append('--'+name)
+            args.append('--' + name)
             args.append(subprocess.list2cmdline([value]))
 
     args = []
@@ -467,6 +512,7 @@ def review(number, repodir=None, branch=None,
         ssh('-p', port, host, 'gerrit', 'set-reviewers', *args)
 
     return 0
+
 
 def unpicked(upstream_branch='HEAD', downstream_branch=None, repodir=None):
     """

@@ -408,7 +408,7 @@ def query(search, limit=None, details=False, repodir=None, **options):
     config = Config(repodir)
     if 'project:' not in search:
         search += ' project:{0}'.format(config['project'])
-    if not 'current_revision' in options:
+    if 'current_revision' not in options:
         options['current_revision'] = True
 
     params = [('q', search)]
@@ -430,7 +430,7 @@ def query(search, limit=None, details=False, repodir=None, **options):
         change['localref'] = change['ref'].replace('refs/', remote + '/')
         change['host'] = config['host']
         change['url'] = "https://{0}/{1}".format(config['host'], change['_number'])
-        if not 'topic' in change:
+        if 'topic' not in change:
             change['topic'] = 'no-topic'  # default for --format "{topic}"
         if details:
             change_id = change['change_id']

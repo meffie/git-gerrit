@@ -360,7 +360,7 @@ Examples:
 
   $ git gerrit-review --message="Good Job" --code-review="+1" 12345
   $ git gerrit-review --message="Works for me" --verified="+1" 12345
-  $ git gerrit-review --add-reviewer="tycobb@yoyodyne.com" --add-reviewer="foo@bar.com" 12345
+  $ git gerrit-review --add-reviewer="ty@example.com" 12345
 
 Configuration variables:
 

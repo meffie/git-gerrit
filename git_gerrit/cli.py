@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2019 Sine Nomine Associates
+# Copyright (c) 2018-2024 Sine Nomine Associates
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -20,10 +20,14 @@
 
 """git-gerrit command line interface"""
 
-import sys
 import argparse
+import json
+import os
 import pprint
+import sys
 import textwrap
+
+import sh
 
 import git_gerrit
 from git_gerrit.unicode import asciitize, cook
@@ -91,7 +95,7 @@ def git_gerrit_checkout(argv=None):
         prog='git-gerrit-checkout',
         description=git_gerrit_checkout.__doc__.strip(),
         epilog="""
-Configuration variables:
+git config options:
 
   gerrit.host            Specifies the gerrit hostname (required).
   gerrit.project         Specifies the gerrit project name (required).
@@ -180,7 +184,7 @@ def git_gerrit_fetch(argv=None):
         prog='git-gerrit-fetch',
         description=git_gerrit_fetch.__doc__.strip(),
         epilog="""
-Configuration variables:
+git config options:
 
   gerrit.host           Specifies the gerrit hostname (required).
   gerrit.project        Specifies the gerrit project name (required).
@@ -236,7 +240,7 @@ def git_gerrit_install_hooks(argv=None):
         prog='git-gerrit-install-hooks',
         description=git_gerrit_install_hooks.__doc__.strip(),
         epilog="""
-Configuration variables:
+git config options:
 
   gerrit.host           Specifies the gerrit hostname (required).
 """,
@@ -260,7 +264,7 @@ def git_gerrit_log(argv=None):
         epilog="""
 Available --format template fields: number, hash, subject
 
-Configuration variables:
+git config options:
 
   gerrit.queryformat    Default git-gerrit-query --format value (optional).
   gerrit.remote         Remote name of the localref --format field (default: origin)
@@ -306,7 +310,7 @@ Available --format template fields:
 
 {0}
 
-Configuration variables:
+git config options:
 
   gerrit.host           Specifies the gerrit hostname (required).
   gerrit.project        Specifies the gerrit project name (required).
@@ -362,7 +366,7 @@ Examples:
   $ git gerrit-review --message="Works for me" --verified="+1" 12345
   $ git gerrit-review --add-reviewer="ty@example.com" 12345
 
-Configuration variables:
+git config options:
 
   gerrit.host           Specifies the gerrit hostname (required).
   gerrit.project        Specifies the gerrit project name (required).
@@ -418,7 +422,7 @@ def git_gerrit_unpicked(argv=None):
         prog='git-gerrit-unpicked',
         description=git_gerrit_unpicked.__doc__.strip(),
         epilog="""
-Configuration variables:
+git config options:
 
   gerrit.unpickedformat    Default git-gerrit-query --format value (optional).
 """,
@@ -442,3 +446,145 @@ Configuration variables:
     except GitGerritError as e:
         print_error(e)
         return 1
+
+
+class GerritList:
+    """Store a list of gerrits numbers on disk."""
+
+    def __init__(self, name):
+        gitdir = sh.Command('git')('rev-parse', '--git-dir').strip()
+        self.filename = os.path.join(gitdir, name)
+        try:
+            with open(self.filename, 'r') as f:
+                self.values = set(json.load(f))
+        except FileNotFoundError:
+            self.values = set()
+        except json.decoder.JSONDecodeError:
+            self.values = set()
+
+    def add(self, number):
+        self.values.add(number)
+        with open(self.filename, 'w') as f:
+            json.dump(sorted(list(self.values)), f, indent=2)
+
+
+def git_gerrit_unreviewed(argv=None):
+    """Show changes that need to be reviewed."""
+
+    config = git_gerrit.Config()
+    user_email = config.get('user.email', None)
+    gerrit_email = config.get('email', user_email)
+    account_id = config.get('account-id', gerrit_email)
+    open_url = config.get('open-url', default='xdg-open')
+
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        prog='git-gerrit-unreviewed',
+        description=git_gerrit_unreviewed.__doc__.strip(),
+        epilog="""
+git config options:
+
+  gerrit.host           gerrit hostname (required)
+  gerrit.project        gerrit project name (required)
+  gerrit.email          gerrit user email address (optional)
+  gerrit.account-id     gerrit user account number
+                        (optional, default: gerrit.email, user.email)
+  gerrit.open_url       command to open url on external browser
+                        (default: xdg-open)
+""",
+    )
+    parser.add_argument(
+        '-n',
+        '--number',
+        dest='limit',
+        metavar='<number>',
+        type=int,
+        help='limit the number of results',
+    )
+    parser.add_argument(
+        '-b',
+        '--branch',
+        metavar='<branch>',
+        help='limit changes to the specified branch',
+    )
+    parser.add_argument(
+        '-a',
+        '--all',
+        action='store_true',
+        help='include skipped and unassigned changes',
+    )
+    parser.add_argument(
+        '-i',
+        '--interactive',
+        action='store_true',
+        help='interactive mode',
+    )
+    args = parser.parse_args(argv)
+
+    terms = []
+    terms.append('is:open')
+    if args.branch:
+        terms.append('branch:%s' % args.branch)
+    terms.append('NOT owner:%s' % account_id)
+    if not args.all:
+        terms.append('reviewer:%s' % account_id)
+    terms.append('NOT reviewedby:%s' % account_id)
+    terms.append('NOT label:Code-Review=-2')
+    search = ' '.join(terms)
+
+    skip = GerritList('gerrit-unreviewed-skip')
+
+    try:
+        changes = list(git_gerrit.query(search))
+    except GitGerritError as e:
+        print_error(e)
+        return 1
+
+    # Sort by gerrit number.
+    changes = sorted(changes, key=lambda c: c['_number'])
+
+    # Filter out changes marked skip.
+    if not args.all:
+        original = changes
+        changes = []
+        for c in original:
+            if c['_number'] not in skip.values:
+                changes.append(c)
+
+    # Trim list if limit is given.
+    if args.limit and args.limit < len(changes):
+        changes = changes[0 : args.limit]
+
+    if not args.interactive:
+        for change in changes:
+            print_change(change, '{url} ({branch}) {subject}')
+    else:
+        previous = None
+        for change in changes:
+            while True:
+                print_change(change, '{number} ({branch}) {subject}')
+                prompt = "Select (r)eview, (n)ext, (s)kip, (q)uit"
+                if previous:
+                    prompt = "%s, (a)dd %s to skip list" % (prompt, previous)
+                answer = input("%s: " % prompt)
+                print('')
+                if not answer or answer == 'r':
+                    sh.Command(open_url)(change['url'])
+                    previous = change['_number']
+                    break
+                elif answer == 'n':
+                    previous = change['_number']
+                    break
+                elif answer == 's':
+                    skip.add(change['_number'])
+                    previous = None
+                    break
+                elif answer == 'a':
+                    if previous:
+                        skip.add(previous)
+                    previous = None
+                elif answer == 'q':
+                    return 0
+                else:
+                    pass
+    return 0

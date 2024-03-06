@@ -23,6 +23,7 @@ Commands
     git gerrit-query             Search gerrit.
     git gerrit-review            Submit review by gerrit number.
     git gerrit-unpicked          Find gerrit numbers on upstream branch not cherry picked.
+    git gerrit-unreviewed        Show changes that need to be reviewed.
 
 
 Installation
@@ -54,8 +55,8 @@ Set the Gerrit host and project names in your local git repo under Gerrit code
 review::
 
     $ cd <my-project-directory>
-    $ git config gerrit.host <gerrit-hostname>
-    $ git config gerrit.project <gerrit-project>
+    $ git config --local gerrit.host <gerrit-hostname>
+    $ git config --local gerrit.project <gerrit-project>
 
 Install the Gerrit provided ``commit-msg`` git-hook and the git-gerrrit ``prepare-commit-msg``
 git hook::
@@ -71,6 +72,7 @@ Setup a local OpenAFS git repo::
     $ cd openafs
     $ git config --local gerrit.host gerrit.openafs.org
     $ git config --local gerrit.project openafs
+    $ git config --local gerrit.account-id $YOUR_ACCOUNT_ID
     $ git gerrit-install-hooks
 
 Find open gerrits on the master branch::
@@ -116,10 +118,20 @@ List the gerrit topics on a branch::
     AFS-OSD-integration
     afs_read-EOF
 
-Show gerrit submissions on the master branch I need to review::
+Show gerrit submissions I am assigned to review on the master branch
+that have not been reviewed since the last update::
 
-    $ git gerrit-query branch:master status:open NOT label:Code-Review=-2 NOT reviewer:tycobb@yoyodyne.com
-    ...
+    $ git gerrit-unreviewed --branch master
+
+Open each gerrit submission I am assigned to review using an external browser,
+one change at a time::
+
+    $ git gerrit-unreviewed --interactive
+
+The ``gerrit-unreviewed`` assumes your gerrit account email matches your git
+user.email. If it is different, set your gerrit account id number::
+
+    $ git config --local gerrit.account-id <account-id>
 
 Fetch a gerrit by number::
 
@@ -174,12 +186,7 @@ the stable branch. (Gerrits may already exists for them.)::
 Using git aliases
 =================
 
-Commonly used queries can be saved as git aliases. For example to show the
-gerrits which have not been reviewed yet::
-
-    [alias]
-    # git gerrit-todo [<branch>] [<userid>]
-    gerrit-todo = "!f() { git-gerrit-query \"branch:${1-master} is:open NOT label:Code-Review>=+1,${2-$USER}\"; }; f"
+Commonly used queries can be saved as git aliases.
 
 
 See Also

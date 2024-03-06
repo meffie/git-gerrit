@@ -32,7 +32,11 @@ class Config:
     def _get(self, name):
         """Read a config value with 'git config --get'."""
         try:
-            return git.config('--get', 'gerrit.%s' % name, _cwd=self.repodir).rstrip()
+            if '.' in name:
+                key = name
+            else:
+                key = 'gerrit.%s' % name
+            return git.config('--get', key, _cwd=self.repodir).rstrip()
         except ErrorReturnCode_1:
             return None
 

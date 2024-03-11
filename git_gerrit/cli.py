@@ -82,6 +82,18 @@ def print_change(change, template='{number} {subject}', dump=False, out=None):
                 raise GitGerritFormatError(e)
 
 
+def git_gerrit_version(argv=None):
+    """Print version and exit."""
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        prog='git-gerrit-version',
+        description=git_gerrit_version.__doc__.strip(),
+    )
+    parser.parse_args(argv)
+    print(git_gerrit.VERSION)
+    return 0
+
+
 def git_gerrit_checkout(argv=None):
     """Fetch then checkout by gerrit number."""
     config = git_gerrit.Config()

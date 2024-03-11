@@ -23,6 +23,7 @@ Commands
     git gerrit-query             Search gerrit.
     git gerrit-review            Submit review by gerrit number.
     git gerrit-unpicked          Find gerrit numbers on upstream branch not cherry picked.
+    git gerrit-version           Print version and exit.
 
 Installation
 ============

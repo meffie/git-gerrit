@@ -39,6 +39,7 @@ setup(
             'git-gerrit-query=git_gerrit.cli:git_gerrit_query',
             'git-gerrit-review=git_gerrit.cli:git_gerrit_review',
             'git-gerrit-unpicked=git_gerrit.cli:git_gerrit_unpicked',
+            'git-gerrit-version=git_gerrit.cli:git_gerrit_version',
         ],
     },
     classifiers=[

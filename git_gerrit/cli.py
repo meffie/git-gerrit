@@ -91,7 +91,7 @@ def git_gerrit_checkout(argv=None):
         prog='git-gerrit-checkout',
         description=git_gerrit_checkout.__doc__.strip(),
         epilog="""
-Configuration variables:
+git config options:
 
   gerrit.host            Specifies the gerrit hostname (required).
   gerrit.project         Specifies the gerrit project name (required).
@@ -180,7 +180,7 @@ def git_gerrit_fetch(argv=None):
         prog='git-gerrit-fetch',
         description=git_gerrit_fetch.__doc__.strip(),
         epilog="""
-Configuration variables:
+git config options:
 
   gerrit.host           Specifies the gerrit hostname (required).
   gerrit.project        Specifies the gerrit project name (required).
@@ -236,7 +236,7 @@ def git_gerrit_install_hooks(argv=None):
         prog='git-gerrit-install-hooks',
         description=git_gerrit_install_hooks.__doc__.strip(),
         epilog="""
-Configuration variables:
+git config options:
 
   gerrit.host           Specifies the gerrit hostname (required).
 """,
@@ -260,7 +260,7 @@ def git_gerrit_log(argv=None):
         epilog="""
 Available --format template fields: number, hash, subject
 
-Configuration variables:
+git config options:
 
   gerrit.queryformat    Default git-gerrit-query --format value (optional).
   gerrit.remote         Remote name of the localref --format field (default: origin)
@@ -306,7 +306,7 @@ Available --format template fields:
 
 {0}
 
-Configuration variables:
+git config options:
 
   gerrit.host           Specifies the gerrit hostname (required).
   gerrit.project        Specifies the gerrit project name (required).
@@ -356,13 +356,13 @@ def git_gerrit_review(argv=None):
         prog='git-gerrit-review',
         description=git_gerrit_review.__doc__.strip(),
         epilog="""
-Examples:
+examples:
 
   $ git gerrit-review --message="Good Job" --code-review="+1" 12345
   $ git gerrit-review --message="Works for me" --verified="+1" 12345
   $ git gerrit-review --add-reviewer="ty@example.com" 12345
 
-Configuration variables:
+git config options:
 
   gerrit.host           Specifies the gerrit hostname (required).
   gerrit.project        Specifies the gerrit project name (required).
@@ -418,7 +418,7 @@ def git_gerrit_unpicked(argv=None):
         prog='git-gerrit-unpicked',
         description=git_gerrit_unpicked.__doc__.strip(),
         epilog="""
-Configuration variables:
+git config options:
 
   gerrit.unpickedformat    Default git-gerrit-query --format value (optional).
 """,

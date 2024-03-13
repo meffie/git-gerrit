@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2019 Sine Nomine Associates
+# Copyright (c) 2018-2024 Sine Nomine Associates
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -361,27 +361,31 @@ git config options:
         return 1
 
 
-def git_gerrit_review(argv=None):
-    """Submit review by gerrit number."""
+def git_gerrit_update(argv=None):
+    """Update gerrits matching search terms."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        prog='git-gerrit-review',
-        description=git_gerrit_review.__doc__.strip(),
+        prog='git-gerrit-update',
+        description=git_gerrit_update.__doc__.strip(),
         epilog="""
-examples:
+authentication required:
 
-  $ git gerrit-review --message="Good Job" --code-review="+1" 12345
-  $ git gerrit-review --message="Works for me" --verified="+1" 12345
-  $ git gerrit-review --add-reviewer="ty@example.com" 12345
+  gerrit account and associated ssh key
 
 git config options:
 
   gerrit.host           Specifies the gerrit hostname (required).
   gerrit.project        Specifies the gerrit project name (required).
+
+examples:
+
+  $ git gerrit-update --message="Good Job" --code-review="+1" change:12345
+  $ git gerrit-update --add-reviewer="ty@example.com" is:open topic:foobar
+  $ git gerrit-update --abandon --message="nevermind" branch:master topic:baz
 """,
     )
     parser.add_argument(
-        '--branch', default=None, metavar='<branch>', help='Branch name'
+        '-n', '--dryrun', action='store_true', help='Show gerrits to be changed.'
     )
     parser.add_argument(
         '--message', default=None, metavar='<message>', help='Review message'
@@ -409,16 +413,29 @@ git config options:
         action='append',
         help='Invite reviewer (this option may be given more than once)',
     )
-    parser.add_argument(
-        'number', metavar='<number>', type=int, help='gerrit change number'
-    )
+    parser.add_argument('term', metavar='<term>', nargs='+', help='search term')
     args = vars(parser.parse_args(argv))
-    number = args.pop('number')
+    dryrun = args.pop('dryrun')
+    search = ' '.join(args.pop('term'))
+
+    changes = []
     try:
-        git_gerrit.review(number, **args)
+        for change in git_gerrit.query(search):
+            changes.append(change)
     except GitGerritError as e:
         print_error(e)
         return 1
+
+    for change in changes:
+        try:
+            if dryrun:
+                print("Skipping: %s %s" % (change['_number'], change['subject']))
+            else:
+                print("Updating: %s %s" % (change['_number'], change['subject']))
+                git_gerrit.update(change['_number'], **args)
+        except GitGerritError as e:
+            print_error(e)
+            return 1
 
 
 def git_gerrit_unpicked(argv=None):

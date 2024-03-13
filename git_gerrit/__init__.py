@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2019 Sine Nomine Associates
+# Copyright (c) 2018-2024 Sine Nomine Associates
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -50,7 +50,7 @@ from git_gerrit.error import GitGerritFormatError
 from git_gerrit.error import GitGerritNotFoundError
 from git_gerrit.error import GitGerritHookDirNotFound
 
-VERSION = "1.8.5"
+VERSION = "2.0.0rc1"
 
 _hush_linter = [
     GitGerritError,
@@ -438,7 +438,7 @@ def query(search, limit=None, details=False, repodir=None, **options):
         yield change
 
 
-def review(
+def update(
     number,
     repodir=None,
     branch=None,

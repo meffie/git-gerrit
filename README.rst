@@ -24,7 +24,6 @@ Commands
     git gerrit-review            Submit review by gerrit number.
     git gerrit-unpicked          Find gerrit numbers on upstream branch not cherry picked.
 
-
 Installation
 ============
 
@@ -180,13 +179,20 @@ the stable branch. (Gerrits may already exists for them.)::
 Using git aliases
 =================
 
-Commonly used queries can be saved as git aliases. For example to show the
-gerrits which have not been reviewed yet::
+Complex queries can be saved as git aliases. For example to create an alias
+called ``gerrit-assigned`` to show the gerrits which have not been reviewed
+yet::
 
     [alias]
-    # git gerrit-todo [<branch>] [<userid>]
-    gerrit-todo = "!f() { git-gerrit-query \"branch:${1-master} is:open NOT label:Code-Review>=+1,${2-$USER}\"; }; f"
-
+    # Show assigned reviews.
+    # (Replace <gerrit-account-id> with your gerrit account number.)
+    gerrit-assigned = gerrit-query \
+      --format='"{url} ({branch}) {subject}"' \
+      is:open \
+      AND reviewer:<gerrit-account-id> \
+      AND label:Code-Review=0,<gerrit-account-id> \
+      AND NOT owner:<gerrit-account-id> \
+      AND NOT label:Code-Review=-2
 
 See Also
 ========

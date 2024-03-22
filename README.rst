@@ -21,7 +21,7 @@ Commands
     git gerrit-install-hooks     Install git hooks to create gerrit change-ids.
     git gerrit-log               Show oneline log with gerrit numbers.
     git gerrit-query             Search gerrit.
-    git gerrit-review            Submit review by gerrit number.
+    git gerrit-update            Update gerrits matching search terms.
     git gerrit-unpicked          Find gerrit numbers on upstream branch not cherry picked.
     git gerrit-version           Print version and exit.
 
@@ -169,6 +169,14 @@ the stable branch. (Gerrits may already exists for them.)::
     13659 f5f59cd8d336b153e2b762bb7afd16e6ab1b1ee2 util: serverLog using memory after free
     13665 1210a8d6d96db2d84595d35ef81ec5d176de05e8 LINUX: Run the 'sparse' checker if available
     ...
+
+Add reviewers to the **foobar** topic::
+
+    $ git gerrit-update --add-reviewer="ty@example.com" branch:master is:open topic:foobar
+
+Abandon all of the changes for the **baz** topic::
+
+    $ git gerrit-update --abandon --message="nevermind" branch:master topic:baz
 
 
 Using git aliases

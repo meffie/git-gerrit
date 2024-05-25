@@ -46,6 +46,13 @@ def print_error(e):
     sys.stderr.write('ERROR: {0}\n'.format(e.message))
 
 
+def print_info(message, out=None):
+    """Display message to stdout."""
+    if out is None:
+        out = sys.stdout
+    out.write('{0}\n'.format(message))
+
+
 def print_change(change, template='{number} {subject}', dump=False, out=None):
     """
     Format and print a change to the output stream.  Retry by printing just the
@@ -60,16 +67,13 @@ def print_change(change, template='{number} {subject}', dump=False, out=None):
         None
     """
     template = cook(template)
-    if not out:
-        out = sys.stdout
     for pass_ in (1, 2):
         try:
             if dump:
                 text = pprint.pformat(change)
             else:
                 text = template.format(**change)
-            out.write(text)
-            out.write('\n')
+            print_info(text, out=out)
             return
         except KeyError as e:
             raise GitGerritFormatError(e)
@@ -90,7 +94,7 @@ def git_gerrit_version(argv=None):
         description=git_gerrit_version.__doc__.strip(),
     )
     parser.parse_args(argv)
-    print(git_gerrit.VERSION)
+    print_info(git_gerrit.VERSION)
     return 0
 
 
@@ -234,11 +238,11 @@ def git_gerrit_help(argv=None):
         description=git_gerrit_help.__doc__.strip(),
     )
     parser.parse_args(argv)
-    print('\nCommands for gerrit code review:\n')
+    print_info('\nCommands for gerrit code review:\n')
     for name, desc in commands():
-        print('    {0:27}  {1}'.format(name, desc))
-    print('\nShow command details with:\n')
-    print('    git gerrit-<command> -h')
+        print_info('    {0:27}  {1}'.format(name, desc))
+    print_info('\nShow command details with:\n')
+    print_info('    git gerrit-<command> -h')
 
 
 def git_gerrit_install_hooks(argv=None):
@@ -429,9 +433,9 @@ examples:
     for change in changes:
         try:
             if dryrun:
-                print("Skipping: %s %s" % (change['_number'], change['subject']))
+                print_info("Skipping: %s %s" % (change['_number'], change['subject']))
             else:
-                print("Updating: %s %s" % (change['_number'], change['subject']))
+                print_info("Updating: %s %s" % (change['_number'], change['subject']))
                 git_gerrit.update(change['_number'], **args)
         except GitGerritError as e:
             print_error(e)

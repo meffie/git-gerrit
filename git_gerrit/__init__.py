@@ -23,7 +23,6 @@ Git helpers for the Gerrit code review system, with an emphasis on the Gerrit
 old-style numeric identifiers.
 """
 
-from __future__ import print_function
 from __future__ import unicode_literals
 
 import os
@@ -102,6 +101,18 @@ echo "prepare-commit-msg: creating new gerrit Change-Id"
 sed -i '/^Change-Id:/d' "$1"
 .git/hooks/commit-msg "$1"
 """
+
+
+def writeln(*items, out=None, newline=True):
+    """
+    Print items to an output stream.
+    """
+    if out is None:
+        out = sys.stdout
+    message = ' '.join([str(item) for item in items])
+    out.write('{0}'.format(message))
+    if newline:
+        out.write('\n')
 
 
 def _chmod(filename, mode):
@@ -196,8 +207,9 @@ def cherry_pick(number, branch='origin/master', repodir=None):
             hash = commit['hash']
             break
     if not hash:
-        sys.stderr.write(
-            'Failed to find gerrit number {0} on branch {1}.\n'.format(number, branch)
+        writeln(
+            'Failed to find gerrit number {0} on branch {1}.'.format(number, branch),
+            out=sys.stderr
         )
         return 1
 
@@ -209,10 +221,14 @@ def cherry_pick(number, branch='origin/master', repodir=None):
     env['GERRIT_CHERRY_PICK'] = 'yes'
     code = 0
     try:
-        print(git('cherry-pick', '-x', hash, _env=env))
+        writeln(git('cherry-pick', '-x', hash, _env=env))
     except sh.ErrorReturnCode as e:
-        sys.stderr.write('Failed to cherry-pick {0}\n{1}\n'.format(hash, e.stderr))
+        writeln(
+            'Failed to cherry-pick {0}\n{1}'.format(hash, e.stderr),
+            out=sys.stderr
+        )
         code = e.exit_code
+
     return code
 
 
@@ -261,35 +277,35 @@ def fetch(
     """
     config = Config(repodir)
     git = sh.Command('git').bake(_cwd=repodir, _tty_out=False)
-    print('searching for gerrit {0}'.format(number))
+    writeln('searching for gerrit {0}'.format(number))
     change = current_change(number, repodir)
-    print('found patchset number {0}'.format(change['patchset']))
+    writeln('found patchset number {0}'.format(change['patchset']))
     url = 'https://{0}/{1}'.format(config['host'], config['project'])
 
     if no_branch:
         refs = '{0}'.format(change['ref'])
-        print('fetching {0} patchset {1}'.format(number, change['patchset']))
+        writeln('fetching {0} patchset {1}'.format(number, change['patchset']))
         git.fetch(url, refs, _cwd=repodir)
-        print('fetched {0} to FETCH_HEAD'.format(number))
+        writeln('fetched {0} to FETCH_HEAD'.format(number))
         if checkout:
             git.checkout('FETCH_HEAD', _cwd=repodir)
-            print('checked out FETCH_HEAD')
+            writeln('checked out FETCH_HEAD')
     else:
         if not branch:
-            print('no branch specified')
+            writeln('no branch specified')
             return 1
         branch = branch.format(**change)
         if _branch_exists(branch):
-            print('branch {0} already exists'.format(branch))
+            writeln('branch {0} already exists'.format(branch))
             return 1
         patchset = change['patchset']
         refs = '{0}:{1}'.format(change['ref'], branch)
-        print('fetching {0},{1} to branch {2}'.format(number, patchset, branch))
+        writeln('fetching {0},{1} to branch {2}'.format(number, patchset, branch))
         git.fetch(url, refs, _cwd=repodir)
-        print('fetched {0},{1} to branch {2}'.format(number, patchset, branch))
+        writeln('fetched {0},{1} to branch {2}'.format(number, patchset, branch))
         if checkout:
             git.checkout(branch, _cwd=repodir)
-            print('checked out branch {0}'.format(branch))
+            writeln('checked out branch {0}'.format(branch))
 
 
 def install_hooks():
@@ -305,24 +321,26 @@ def install_hooks():
     # Install the gerrit commit-msg hook.
     commit_msg = os.path.join(hookdir, 'commit-msg')
     if os.path.exists(commit_msg):
-        sys.stdout.write('{0} git hook already present.\n'.format(commit_msg))
+        writeln('{0} git hook already present.'.format(commit_msg))
     else:
         url = 'https://{0}/tools/hooks/commit-msg'.format(config['host'])
-        sys.stdout.write('Downloading git hook to {0} ... '.format(commit_msg))
+        writeln('Downloading git hook to {0} ... '.format(commit_msg),
+                   newline=False)
         urlretrieve(url, commit_msg)
         _chmod(commit_msg, 'rwxr-xr-x')
-        sys.stdout.write('done.\n')
+        writeln('done.')
 
     # Install our custom prepare-commit-msg hook for cherry picking gerrits.
     prepare_commit_msg = os.path.join(hookdir, 'prepare-commit-msg')
     if os.path.exists(prepare_commit_msg):
-        sys.stdout.write('%s hook already present.\n' % prepare_commit_msg)
+        writeln('{0} hook already present.'.format(prepare_commit_msg))
     else:
-        sys.stdout.write('Writing file %s ... ' % prepare_commit_msg)
+        writeln('Writing file {0} ... '.format(prepare_commit_msg),
+                    newline=False)
         with open(prepare_commit_msg, 'w') as f:
             f.write(GIT_HOOK)
         _chmod(prepare_commit_msg, 'rwxr-xr-x')
-        sys.stdout.write('done.\n')
+        writeln('done.')
 
     return 0
 
@@ -497,7 +515,7 @@ def update(
         changeid = '{0},{1}'.format(number, change['patchset'])
         args.append(changeid)
         if verbose:
-            print('running: ssh', '-p', port, host, 'gerrit', 'review', *args)
+            writeln('running: ssh', '-p', port, host, 'gerrit', 'review', *args)
         ssh('-p', port, host, 'gerrit', 'review', *args)
 
     args = []
@@ -508,7 +526,7 @@ def update(
         arg('branch', branch)
         args.append(number)
         if verbose:
-            print('running: ssh', '-p', port, host, 'gerrit', 'set-reviewers', *args)
+            writeln('running: ssh', '-p', port, host, 'gerrit', 'set-reviewers', *args)
         ssh('-p', port, host, 'gerrit', 'set-reviewers', *args)
 
     return 0

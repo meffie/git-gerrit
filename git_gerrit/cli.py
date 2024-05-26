@@ -26,6 +26,7 @@ import pprint
 import textwrap
 
 import git_gerrit
+from git_gerrit import writeln
 from git_gerrit.unicode import asciitize, cook
 from git_gerrit.error import GitGerritError, GitGerritFormatError
 
@@ -39,18 +40,6 @@ def commands():
             desc = globals()[key].__doc__.strip().strip()
             cmds.append((name, desc))
     return cmds
-
-
-def print_error(e):
-    """Display error to stderr."""
-    sys.stderr.write('ERROR: {0}\n'.format(e.message))
-
-
-def print_info(message, out=None):
-    """Display message to stdout."""
-    if out is None:
-        out = sys.stdout
-    out.write('{0}\n'.format(message))
 
 
 def print_change(change, template='{number} {subject}', dump=False, out=None):
@@ -73,7 +62,7 @@ def print_change(change, template='{number} {subject}', dump=False, out=None):
                 text = pprint.pformat(change)
             else:
                 text = template.format(**change)
-            print_info(text, out=out)
+            writeln(text, out=out)
             return
         except KeyError as e:
             raise GitGerritFormatError(e)
@@ -94,7 +83,7 @@ def git_gerrit_version(argv=None):
         description=git_gerrit_version.__doc__.strip(),
     )
     parser.parse_args(argv)
-    print_info(git_gerrit.VERSION)
+    writeln(git_gerrit.VERSION)
     return 0
 
 
@@ -135,7 +124,7 @@ git config options:
     try:
         git_gerrit.fetch(number, **args)
     except GitGerritError as e:
-        print_error(e)
+        writeln(e.message, out=sys.stderr)
         return 1
 
 
@@ -183,7 +172,7 @@ Example:
     try:
         git_gerrit.cherry_pick(number, branch)
     except GitGerritError as e:
-        print_error(e)
+        writeln(e.message, out=sys.stderr)
         return 1
 
 
@@ -226,7 +215,7 @@ git config options:
     try:
         git_gerrit.fetch(number, **args)
     except GitGerritError as e:
-        print_error(e)
+        writeln(e.message, out=sys.stderr)
         return 1
 
 
@@ -238,11 +227,11 @@ def git_gerrit_help(argv=None):
         description=git_gerrit_help.__doc__.strip(),
     )
     parser.parse_args(argv)
-    print_info('\nCommands for gerrit code review:\n')
+    writeln('\nCommands for gerrit code review:\n')
     for name, desc in commands():
-        print_info('    {0:27}  {1}'.format(name, desc))
-    print_info('\nShow command details with:\n')
-    print_info('    git gerrit-<command> -h')
+        writeln('    {0:27}  {1}'.format(name, desc))
+    writeln('\nShow command details with:\n')
+    writeln('    git gerrit-<command> -h')
 
 
 def git_gerrit_install_hooks(argv=None):
@@ -261,7 +250,7 @@ git config options:
     try:
         git_gerrit.install_hooks()
     except GitGerritError as e:
-        print_error(e)
+        writeln(e.message, out=sys.stderr)
         return 1
 
 
@@ -304,7 +293,7 @@ git config options:
         for change in git_gerrit.log(**args):
             print_change(change, template)
     except GitGerritError as e:
-        print_error(e)
+        writeln(e.message, out=sys.stderr)
         return 1
 
 
@@ -361,7 +350,7 @@ git config options:
         for change in git_gerrit.query(search, **args):
             print_change(change, template, dump)
     except GitGerritError as e:
-        print_error(e)
+        writeln(e.message, out=sys.stderr)
         return 1
 
 
@@ -427,18 +416,18 @@ examples:
         for change in git_gerrit.query(search):
             changes.append(change)
     except GitGerritError as e:
-        print_error(e)
+        writeln(e.message, out=sys.stderr)
         return 1
 
     for change in changes:
         try:
             if dryrun:
-                print_info("Skipping: %s %s" % (change['_number'], change['subject']))
+                writeln("Skipping: %s %s" % (change['_number'], change['subject']))
             else:
-                print_info("Updating: %s %s" % (change['_number'], change['subject']))
+                writeln("Updating: %s %s" % (change['_number'], change['subject']))
                 git_gerrit.update(change['_number'], **args)
         except GitGerritError as e:
-            print_error(e)
+            writeln(e.message, out=sys.stderr)
             return 1
 
 
@@ -473,5 +462,5 @@ git config options:
         for commit in git_gerrit.unpicked(**args):
             print_change(commit, template)
     except GitGerritError as e:
-        print_error(e)
+        writeln(e.message, out=sys.stderr)
         return 1

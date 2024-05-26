@@ -6,6 +6,7 @@ import git_gerrit.cli
 
 def test_help(argv, output):
     git_gerrit.cli.git_gerrit_help(argv)
+    assert len(output) > 1
     assert "Commands for gerrit code review" in output[0]
 
 

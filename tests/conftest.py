@@ -11,13 +11,14 @@ def argv():
 
 @pytest.fixture
 def output(monkeypatch):
-    messages = []
+    output = []
 
-    def grab_messages(message, out=None):
-        messages.append(message)
+    def capture(*items, out=None, newline=True):
+        message = ' '.join([str(item) for item in items])
+        output.append(message)
 
-    monkeypatch.setattr(git_gerrit.cli, "print_info", grab_messages)
-    return messages
+    monkeypatch.setattr(git_gerrit.cli, "writeln", capture)
+    return output
 
 
 @pytest.fixture

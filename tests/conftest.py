@@ -1,23 +1,41 @@
 import pytest
+import git_gerrit
+import git_gerrit.cli
 
 
 @pytest.fixture
 def argv():
-    return []
+    argv = []
+    return argv
 
 
 @pytest.fixture
-def mock_config():
-    return {
+def output(monkeypatch):
+    messages = []
+
+    def grab_messages(message, out=None):
+        messages.append(message)
+
+    monkeypatch.setattr(git_gerrit.cli, "print_info", grab_messages)
+    return messages
+
+
+@pytest.fixture
+def mock_config(monkeypatch):
+    test_config = {
         "project": "mayhem",
         "host": "gerrit.example.org",
-        "remote": "origin",
     }
+
+    def _get(self, name, default=None):
+        return test_config.get(name, default)
+
+    monkeypatch.setattr(git_gerrit.Config, "_get", _get)
 
 
 @pytest.fixture
-def mock_change():
-    return {
+def mock_rest_get(monkeypatch, mock_config):
+    test_change = {
         "_number": 12345,
         "branch": "master",
         "change_id": "I0123456789abcdef0123456789abcdef01234567",
@@ -51,3 +69,8 @@ def mock_change():
         "submittable": False,
         "updated": "2024-05-23 21:45:57.862000000",
     }
+
+    def get(self, endpoint, return_response=False, **kwargs):
+        return [test_change]
+
+    monkeypatch.setattr(git_gerrit.pygerrit2.GerritRestAPI, "get", get)

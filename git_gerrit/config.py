@@ -19,20 +19,19 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from __future__ import unicode_literals
-from sh.contrib import git
-from sh import ErrorReturnCode_1
+import sh
 from git_gerrit.error import GitGerritConfigError
 
 
 class Config:
     def __init__(self, repodir=None):
-        self.repodir = repodir
+        self.git = sh.Command('git').bake(_cwd=repodir, _tty_out=False)
 
     def _get(self, name):
         """Read a config value with 'git config --get'."""
         try:
-            return git.config('--get', 'gerrit.%s' % name, _cwd=self.repodir).rstrip()
-        except ErrorReturnCode_1:
+            return self.git.config('--get', 'gerrit.%s' % name).rstrip()
+        except sh.ErrorReturnCode_1:
             return None
 
     def __getitem__(self, variable):

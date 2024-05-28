@@ -1,6 +1,57 @@
 import pytest
 import git_gerrit
 import git_gerrit.cli
+import sh
+
+
+class MockCommandBase:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def bake(self, *args, **kwargs):
+        return self
+
+
+class MockGitCommand(MockCommandBase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        if len(args) > 0 and args[0] == "show-ref":
+            # Simulate not-found error.
+            sh.ErrorReturnCode.exit_code = 1
+            raise sh.ErrorReturnCode("git show-ref", b"", b"ref not found")
+        return
+
+    def config(self, op, name, *args, **kwargs):
+        if op != "--get":
+            raise ValueError("Unexpected operation: {0}".format(op))
+        if name == "gerrit.project":
+            value = "mayhem"
+        elif name == "gerrit.host":
+            value = "gerrit.example.org"
+        else:
+            sh.ErrorReturnCode_1.exit_code = 1
+            raise sh.ErrorReturnCode_1("git config", b"", b"not found")
+        return value
+
+    def log(self, *args, **kwargs):
+        return []
+
+    def fetch(self, *args, **kwargs):
+        return
+
+    def checkout(self, *args, **kwargs):
+        return
+
+
+class MockSshCommand(MockCommandBase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        return
 
 
 @pytest.fixture
@@ -14,28 +65,32 @@ def output(monkeypatch):
     output = []
 
     def capture(*items, out=None, newline=True):
-        message = ' '.join([str(item) for item in items])
+        message = " ".join([str(item) for item in items])
         output.append(message)
 
     monkeypatch.setattr(git_gerrit.cli, "writeln", capture)
+    monkeypatch.setattr(git_gerrit, "writeln", capture)
     return output
 
 
 @pytest.fixture
-def mock_config(monkeypatch):
-    test_config = {
-        "project": "mayhem",
-        "host": "gerrit.example.org",
-    }
+def mock_commands(monkeypatch):
 
-    def _get(self, name, default=None):
-        return test_config.get(name, default)
+    def make_command(name):
+        if name == "git":
+            command = MockGitCommand()
+        elif name == "ssh":
+            command = MockSshCommand()
+        else:
+            raise ValueError("Unexpected command: {0}".format(name))
+        return command
 
-    monkeypatch.setattr(git_gerrit.Config, "_get", _get)
+    monkeypatch.setattr(git_gerrit.config.sh, "Command", make_command)
+    monkeypatch.setattr(git_gerrit.sh, "Command", make_command)
 
 
 @pytest.fixture
-def mock_rest_get(monkeypatch, mock_config):
+def mock_rest(monkeypatch, mock_commands):
     test_change = {
         "_number": 12345,
         "branch": "master",

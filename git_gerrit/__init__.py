@@ -325,7 +325,7 @@ def install_hooks():
     else:
         url = 'https://{0}/tools/hooks/commit-msg'.format(config['host'])
         writeln('Downloading git hook to {0} ... '.format(commit_msg),
-                   newline=False)
+                newline=False)
         urlretrieve(url, commit_msg)
         _chmod(commit_msg, 'rwxr-xr-x')
         writeln('done.')
@@ -336,7 +336,7 @@ def install_hooks():
         writeln('{0} hook already present.'.format(prepare_commit_msg))
     else:
         writeln('Writing file {0} ... '.format(prepare_commit_msg),
-                    newline=False)
+                newline=False)
         with open(prepare_commit_msg, 'w') as f:
             f.write(GIT_HOOK)
         _chmod(prepare_commit_msg, 'rwxr-xr-x')

@@ -26,9 +26,37 @@ import pprint
 import textwrap
 
 import git_gerrit
-from git_gerrit import writeln
+from git_gerrit.api import writeln
 from git_gerrit.unicode import asciitize, cook
 from git_gerrit.error import GitGerritError, GitGerritFormatError
+
+CHANGE_FIELDS = [
+    # Gerrit provided fields.
+    'branch',
+    'change_id',
+    'created',
+    'current_revision',
+    'deletions',
+    'hashtags',
+    'id',
+    'insertions',
+    'owner',
+    'project',
+    'status',
+    'subject',
+    'submittable',
+    'submitted',
+    'topic',  # Defaults to 'no-topic' instead of empty or None.
+    'updated',
+    # Added from gerrit provided revisions sub-fields.
+    'number',
+    'patchset',
+    'ref',
+    'localref',
+    'hash',
+    'host',
+    'url',
+]
 
 
 def commands():
@@ -301,7 +329,7 @@ def git_gerrit_query(argv=None):
     """Search gerrit."""
     config = git_gerrit.Config()
     template = config.get('queryformat', default='{number} {subject}')
-    fields_help = textwrap.fill(', '.join(sorted(git_gerrit.CHANGE_FIELDS)))
+    fields_help = textwrap.fill(', '.join(sorted(CHANGE_FIELDS)))
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-query',

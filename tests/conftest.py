@@ -68,8 +68,8 @@ def output(monkeypatch):
         message = " ".join([str(item) for item in items])
         output.append(message)
 
+    monkeypatch.setattr(git_gerrit.api, "writeln", capture)
     monkeypatch.setattr(git_gerrit.cli, "writeln", capture)
-    monkeypatch.setattr(git_gerrit, "writeln", capture)
     return output
 
 
@@ -86,7 +86,7 @@ def mock_commands(monkeypatch):
         return command
 
     monkeypatch.setattr(git_gerrit.config.sh, "Command", make_command)
-    monkeypatch.setattr(git_gerrit.sh, "Command", make_command)
+    monkeypatch.setattr(git_gerrit.api.sh, "Command", make_command)
 
 
 @pytest.fixture
@@ -129,4 +129,4 @@ def mock_rest(monkeypatch, mock_commands):
     def get(self, endpoint, return_response=False, **kwargs):
         return [test_change]
 
-    monkeypatch.setattr(git_gerrit.pygerrit2.GerritRestAPI, "get", get)
+    monkeypatch.setattr(git_gerrit.api.pygerrit2.GerritRestAPI, "get", get)

@@ -49,7 +49,7 @@ from git_gerrit.error import GitGerritFormatError
 from git_gerrit.error import GitGerritNotFoundError
 from git_gerrit.error import GitGerritHookDirNotFound
 
-VERSION = "2.0.0"
+VERSION = "2.1.0"
 
 _hush_linter = [
     GitGerritError,

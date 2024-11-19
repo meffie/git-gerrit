@@ -429,31 +429,44 @@ def query(search, limit=None, details=False, repodir=None, **options):
     if 'current_revision' not in options:
         options['current_revision'] = True
 
-    params = [('q', search)]
-    if limit:
-        params.append(('n', limit))
-    for option in options:
-        if options[option] is True:
-            params.append(('o', option.upper()))
-    query = '/changes/?{0}'.format(urlencode(params))
+    start = 0
+    more_changes = False
+    while True:  # do ... while more_changes
+        params = [('q', search)]
+        if limit:
+            params.append(('n', (limit - start)))
+        if start:
+            params.append(('S', start))
+        for option in options:
+            if options[option] is True:
+                params.append(('o', option.upper()))
+        query = '/changes/?{0}'.format(urlencode(params))
 
-    remote = config.get('remote', default='origin')
-    url = "https://{0}".format(config['host'])
-    gerrit = pygerrit2.rest.GerritRestAPI(url)
-    for change in gerrit.get(query):
-        change['number'] = change['_number']
-        change['hash'] = change['current_revision']  # alias
-        change['patchset'] = change['revisions'][change['current_revision']]['_number']
-        change['ref'] = change['revisions'][change['current_revision']]['ref']
-        change['localref'] = change['ref'].replace('refs/', remote + '/')
-        change['host'] = config['host']
-        change['url'] = "https://{0}/{1}".format(config['host'], change['_number'])
-        if 'topic' not in change:
-            change['topic'] = 'no-topic'  # default for --format "{topic}"
-        if details:
-            change_id = change['change_id']
-            change['details'] = gerrit.get('/changes/{0}/detail'.format(change_id))
-        yield change
+        remote = config.get('remote', default='origin')
+        url = "https://{0}".format(config['host'])
+        gerrit = pygerrit2.rest.GerritRestAPI(url)
+        for change in gerrit.get(query):
+            start += 1
+            more_changes = change.get('_more_changes', False)
+            change['number'] = change['_number']
+            change['hash'] = change['current_revision']  # alias
+            change['patchset'] = change['revisions'][change['current_revision']]['_number']
+            change['ref'] = change['revisions'][change['current_revision']]['ref']
+            change['localref'] = change['ref'].replace('refs/', remote + '/')
+            change['host'] = config['host']
+            change['url'] = "https://{0}/{1}".format(config['host'], change['_number'])
+            if 'topic' not in change:
+                change['topic'] = 'no-topic'  # default for --format "{topic}"
+            if details:
+                change_id = change['change_id']
+                change['details'] = gerrit.get('/changes/{0}/detail'.format(change_id))
+            yield change
+
+        if limit and start >= limit:
+            break
+
+        if not more_changes:
+            break
 
 
 def update(

@@ -1,0 +1,418 @@
+# Copyright (c) 2018-2025 Sine Nomine Associates
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THE SOFTWARE IS PROVIDED 'AS IS' AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+"""
+Git helpers for the Gerrit code review system, with an emphasis on the Gerrit
+old-style numeric identifiers.
+"""
+
+import re
+import subprocess
+
+import pygerrit2.rest
+import urllib.parse
+import sh
+
+# from urllib.parse import urlencode
+
+from git_gerrit.git import Git
+from git_gerrit.error import (
+    GitGerritError,
+    GitGerritNotFoundError,
+)
+
+CHANGE_FIELDS = [
+    # Gerrit provided fields.
+    'branch',
+    'change_id',
+    'created',
+    'current_revision',
+    'deletions',
+    'hashtags',
+    'id',
+    'insertions',
+    'owner',
+    'project',
+    'status',
+    'subject',
+    'submittable',
+    'submitted',
+    'topic',
+    'updated',
+    # Local fields added for printing changes.
+    'number',
+    'patchset',
+    'ref',
+    'localref',
+    'hash',
+    'host',
+    'url',
+]
+
+
+def cherry_pick(number, branch='origin/master'):
+    """
+    Cherry pick change from upstream branch and create a new gerrit identifier
+    in the commit messsage.
+
+    args:
+        number (int): gerrit numeric identifier
+        branch (str): upstream branch to pick from
+    returns:
+        non-zero on error
+    """
+    git = Git()
+
+    sha1 = None
+    for commit in log(revision=branch, shorthash=False):
+        if commit['number'] == number:
+            sha1 = commit['hash']
+            break
+    if not sha1:
+        raise GitGerritError(
+            f"Failed to find gerrit number {number} on branch {branch}."
+        )
+    git.cherry_pick(sha1)
+
+
+def current_change(number):
+    """
+    Look up the current change in gerrit.
+
+    args:
+        number (int):  the gerrit change number
+    returns:
+        a current change dictionary (including the current patchset number)
+    """
+    changes = list(query(f"change:{number}", limit=1, current_revision=True))
+    if not changes or len(changes) != 1:
+        raise GitGerritNotFoundError(f"gerrit {format} not found")
+    change = changes[0]
+    return change
+
+
+def fetch(
+    number,
+    no_branch=False,
+    branch='gerrit/{number}/{patchset}',
+    checkout=False,
+):
+    """
+    Fetch a gerrit by the legacy change number.
+
+    args:
+        number (int):     legacy gerrit number
+        no_branch (bool): skip local branch when True
+        branch (str):     local branch name to fetch to.
+                          default: 'gerrit/{number}/{patchset}'
+        checkout (bool):  checkout after fetch
+    returns:
+        None
+    raises:
+        GitGerritNotFoundError
+    """
+    git = Git()
+
+    print(f"searching for gerrit {number}")
+    change = current_change(number)
+    patchset = change['patchset']
+    print(f"found patchset number {patchset}")
+
+    if no_branch:
+        refs = str(change['ref'])
+        print(f"fetching {number} patchset {patchset}")
+        git.fetch(refs)
+        print(f"fetched {number} to FETCH_HEAD")
+        if checkout:
+            git.checkout("FETCH_HEAD")
+            print("checked out FETCH_HEAD")
+    else:
+        if not branch:
+            print('no branch specified')
+            return 1
+        branch = branch.format(**change)
+        if git.does_branch_exist(branch):
+            print(f"branch {branch} already exists")
+            return 1
+        ref = change['ref']
+        refs = f"{ref}:{branch}"
+        print(f"fetching {number},{patchset} to branch {branch}")
+        git.fetch(refs)
+        print(f"fetched {number},{patchset} to branch {branch}")
+        if checkout:
+            git.checkout(branch)
+            print(f"checked out branch {branch}")
+
+
+def log(number=None, reverse=False, shorthash=True, revision=None):
+    """
+    Retrieve log entries with gerrit numbers (extracted from the commit
+    messages) from the local git repository.
+
+    args:
+        number (int):     limit the log to these number of entries [optional]
+        reverse (bool):   reverse log order
+        shorthash (bool): short sha1
+        revision (str):   git revision to log (default is HEAD)
+    yields:
+        dictionary with keys: 'hash', 'subject', 'number', 'author', 'email'
+    """
+    git = Git()
+
+    if shorthash:
+        hashfmt = '%h'
+    else:
+        hashfmt = '%H'
+    options = {}
+    options['pretty'] = f"hash:{hashfmt}%nsubject:%s%nauthor:%an%nemail:%ae%n%b%%%%"
+    options['reverse'] = reverse
+    if number:
+        options['max-count'] = number
+
+    fields = {'hash': '', 'subject': '', 'number': '-', 'author': '', 'email': ''}
+    for line in git.log(revision, **options):
+        m = re.match(r'^hash:(.*)', line)
+        if m:
+            fields['hash'] = m.group(1)
+            continue
+        m = re.match(r'^subject:(.*)', line)
+        if m:
+            fields['subject'] = m.group(1)
+            continue
+        m = re.match(r'^author:(.*)', line)
+        if m:
+            fields['author'] = m.group(1)
+            continue
+        m = re.match(r'^email:(.*)', line)
+        if m:
+            fields['email'] = m.group(1)
+            continue
+        m = re.match(r'^Reviewed-on: .*/([0-9]+)$', line)
+        if m:
+            fields['number'] = int(m.group(1))  # get last one
+            continue
+        m = re.match(r'^%%$', line)
+        if m:
+            yield fields
+            fields = {
+                'hash': '',
+                'subject': '',
+                'number': '-',
+                'author': '',
+                'email': '',
+            }
+
+
+def _flatten_change(change, host, remote):
+    """Update the change dictionary to make it easier to print."""
+
+    # Auxiliary keys for printing changes.
+    number = change['_number']
+    change['number'] = number
+    change['hash'] = change['current_revision']  # alias
+    change['patchset'] = change['revisions'][change['current_revision']]['_number']
+    change['ref'] = change['revisions'][change['current_revision']]['ref']
+    change['localref'] = change['ref'].replace('refs/', remote + '/')
+    change['host'] = host
+    change['url'] = f"https://{host}/{number}"
+
+    # The owner is a dict with the account id.
+    if isinstance(change['owner'], dict):
+        if '_account_id' in change['owner']:
+            owner = change['owner']['_account_id']
+        else:
+            owner = 'Unknown'
+        change['owner'] = owner
+
+    # The hashtags is a list of strings.
+    change['hashtags'] = ','.join(change['hashtags'])
+
+    # Add empty values for optional fields to avoid key errors when printing.
+    for key in CHANGE_FIELDS:
+        if key not in change:
+            change[key] = ''
+
+    return change
+
+
+def query(search, limit=None, details=False, **options):
+    """Search gerrit for changes.
+
+    args:
+        search (str): one or more Gerrit search terms
+        options (dict): zero or more Gerrit search options
+    returns:
+        list of change info dicts
+    """
+    git = Git()
+    remote = git.config('remote')
+    host = git.config('host')
+    gerrit = pygerrit2.rest.GerritRestAPI(f"https://{host}")
+
+    if 'project:' not in search:
+        project = git.config('project')
+        search += f" project:{project}"
+
+    if 'current_revision' not in options:
+        options['current_revision'] = True
+
+    # Gerrit limits the number of results per request, so loop to
+    # retrieve results in batches.
+    start = 0
+    more_changes = True
+    while more_changes:
+        # Setup query parameters.
+        params = [('q', search)]
+        if limit:
+            params.append(('n', (limit - start)))
+        if start:
+            params.append(('S', start))
+        for option in options:
+            if options[option] is True:
+                params.append(('o', option.upper()))
+        params = urllib.parse.urlencode(params)
+
+        # Retrieve next batch.
+        for change in gerrit.get(f"/changes/?{params}"):
+            start += 1
+            more_changes = change.get('_more_changes', False)
+            change = _flatten_change(change, host, remote)
+            if details:
+                change_id = change['change_id']
+                change['_detail'] = gerrit.get(f"/changes/{change_id}/detail")
+            yield change
+            if limit and start >= limit:
+                more_changes = False
+
+
+def update(
+    number,
+    branch=None,
+    message=None,
+    code_review=None,
+    verified=None,
+    abandon=False,
+    restore=False,
+    add_reviewers=None,
+    verbose=False,
+):
+    """Submit review to gerrit using the ssh command line interface.
+
+    Note: This method requires authentication. Create a gerrit account and
+    import your ssh public key. See the Gerrit documentation.
+
+    args:
+        number (int): gerrit id (requried)
+        branch (str): branch change is located (optional)
+        message (str): review message to add (optional)
+        code_review (str): code review vote to add (optional)
+        verified (str): verication vote to add (optional)
+        abandon (bool): set change status to abandoned
+        restore (bool): set change status back to open if abandoned
+    returns:
+        None
+    """
+    ssh = sh.Command('ssh')
+    git = Git()
+
+    if abandon and restore:
+        raise ValueError('Specify only one of "abandon" or "restore".')
+
+    if add_reviewers is None:
+        add_reviewers = []
+
+    host = git.config('host')
+    project = git.config('project')
+    port = git.config('port')
+
+    def arg(name, value):
+        if value is True:
+            args.append('--' + name)
+        elif value:
+            args.append('--' + name)
+            args.append(subprocess.list2cmdline([value]))
+
+    args = []
+    arg('message', message)
+    arg('code-review', code_review)
+    arg('verified', verified)
+    arg('abandon', abandon)
+    arg('restore', restore)
+    if args:
+        arg('project', project)
+        arg('branch', branch)
+        change = current_change(number)
+        patchset = change['patchset']
+        changeid = f"{number},{patchset}"
+        args.append(changeid)
+        if verbose:
+            print('running: ssh', '-p', port, host, 'gerrit', 'review', *args)
+        ssh('-p', str(port), host, 'gerrit', 'review', *args)
+
+    args = []
+    for reviewer in add_reviewers:
+        arg('add', reviewer)
+    if args:
+        arg('project', project)
+        arg('branch', branch)
+        args.append(number)
+        if verbose:
+            print('running: ssh', '-p', port, host, 'gerrit', 'set-reviewers', *args)
+        ssh('-p', str(port), host, 'gerrit', 'set-reviewers', *args)
+
+    return 0
+
+
+def unpicked(upstream_branch='HEAD', downstream_branch=None):
+    """
+    Find commits on the master ('upstream') branch which are not on the stable
+    ('downstream') branch and have not been cherry picked on to the stable
+    branch.
+
+    args:
+        upstream_branch:
+        downstream_branch:
+    """
+    git = Git()
+
+    if not downstream_branch:
+        raise ValueError('Downstream branch name is required.')
+
+    # Lookup the sha1s for each branch.
+    u = git.get_hashes(upstream_branch)
+    d = git.get_hashes(downstream_branch)
+
+    # Find which commits have been cherry picked.
+    #
+    # Conventionally, commits are cherry picked from the upstream branch on to
+    # the downstream branch, but in rare cases cherry picks can go in the
+    # opposite direction. A change is merged is merged on the "stable" branch
+    # first and cherry picked on to the master branch later.
+    cu = set(git.get_cherry_picked(upstream_branch).keys())
+    cd = set(git.get_cherry_picked(downstream_branch).values())
+
+    # Commits not in the downstream branch, and not cherry picked to the down
+    # stream branch (nor cherry picked from the downstream branch).
+    x = u - (d | cd | cu)
+
+    # Output them in git log order.
+    for commit in log(revision=upstream_branch, shorthash=False):
+        if commit['hash'] in x:
+            yield commit

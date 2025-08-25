@@ -25,20 +25,20 @@ class GitGerritError(Exception):
 
 class GitGerritConfigError(GitGerritError):
     def __init__(self, variable):
-        self.variable = variable
-        self.message = (
-            "Use 'git config gerrit.{0} <value>' "
-            "to set the value of '{0}'.".format(variable)
+        message = (
+            f"Run `git config gerrit.{variable} <value>`"
+            f" to set the value of '{variable}'."
         )
+        super().__init__(message)
+        self.variable = variable
 
 
 class GitGerritFormatError(GitGerritError):
-    pass  # Unknown --format parameter
+    def __init__(self, error):
+        message = f"Invalid --format argument: {error}"
+        super().__init__(message)
 
 
 class GitGerritNotFoundError(GitGerritError):
-    pass
-
-
-class GitGerritHookDirNotFound(GitGerritError):
-    pass
+    def __init__(self, message):
+        super().__init__(message)

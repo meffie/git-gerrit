@@ -7,7 +7,7 @@ except ImportError:
     from distutils.core import setup
 
 def get_version():
-    with open('git_gerrit/__init__.py') as f:
+    with open('git_gerrit/__version__.py') as f:
         for line in f.readlines():
             m = re.match(r'VERSION = "(.*)"', line)
             if m:
@@ -30,16 +30,16 @@ setup(
     ],
     entry_points = {
         'console_scripts': [
-            'git-gerrit-checkout=git_gerrit.cli:git_gerrit_checkout',
-            'git-gerrit-cherry-pick=git_gerrit.cli:git_gerrit_cherry_pick',
-            'git-gerrit-fetch=git_gerrit.cli:git_gerrit_fetch',
-            'git-gerrit-help=git_gerrit.cli:git_gerrit_help',
-            'git-gerrit-install-hooks=git_gerrit.cli:git_gerrit_install_hooks',
-            'git-gerrit-log=git_gerrit.cli:git_gerrit_log',
-            'git-gerrit-query=git_gerrit.cli:git_gerrit_query',
-            'git-gerrit-unpicked=git_gerrit.cli:git_gerrit_unpicked',
-            'git-gerrit-update=git_gerrit.cli:git_gerrit_update',
-            'git-gerrit-version=git_gerrit.cli:git_gerrit_version',
+            'git-gerrit-checkout=git_gerrit.cli:main_git_gerrit_checkout',
+            'git-gerrit-cherry-pick=git_gerrit.cli:main_git_gerrit_cherry_pick',
+            'git-gerrit-fetch=git_gerrit.cli:main_git_gerrit_fetch',
+            'git-gerrit-help=git_gerrit.cli:main_git_gerrit_help',
+            'git-gerrit-install-hooks=git_gerrit.cli:main_git_gerrit_install_hooks',
+            'git-gerrit-log=git_gerrit.cli:main_git_gerrit_log',
+            'git-gerrit-query=git_gerrit.cli:main_git_gerrit_query',
+            'git-gerrit-unpicked=git_gerrit.cli:main_git_gerrit_unpicked',
+            'git-gerrit-update=git_gerrit.cli:main_git_gerrit_update',
+            'git-gerrit-version=git_gerrit.cli:main_git_gerrit_version',
         ],
     },
     classifiers=[
@@ -47,7 +47,6 @@ setup(
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Operating System :: POSIX',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Topic :: Software Development',
     ],

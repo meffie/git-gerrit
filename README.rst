@@ -7,7 +7,7 @@ with the **pygerrit2** package to access the Gerrit REST API.
 
 .. _Gerrit code review system: https://www.gerritcodereview.com/
 
-**git-gerrit** is compatible with Python 2 and Python 3.
+**git-gerrit** is requires Python 3.9 or later.
 
 Commands
 ========
@@ -104,7 +104,7 @@ Find gerrits with subjects containing the term 'debuginfo'::
 
 Find the branch names of gerrits with the subject containing the term 'debuginfo'::
 
-    $ git gerrit-query --format='{branch:>20s} {_number} {subject}' debuginfo
+    $ git gerrit-query --format='{branch:>20s} {number} {subject}' debuginfo
                   master 13030 redhat: Make separate debuginfo for kmods work with recent rpm
     openafs-stable-1_6_x 13029 redhat: Create unique debuginfo packages for kmods
     openafs-stable-1_6_x 12818 redhat: separate debuginfo package for kmod rpm

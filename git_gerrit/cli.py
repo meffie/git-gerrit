@@ -20,81 +20,49 @@
 
 """git-gerrit command line interface"""
 
-import sys
 import argparse
 import pprint
+import sys
 import textwrap
 
 import git_gerrit
-from git_gerrit import writeln
-from git_gerrit.unicode import asciitize, cook
+from git_gerrit.git import Git
 from git_gerrit.error import GitGerritError, GitGerritFormatError
 
 
-def commands():
-    """Return a list of command name and description tuples."""
-    cmds = []
-    for key in sorted(globals().keys()):
-        if key.startswith('git_gerrit_'):
-            name = key.replace('git_gerrit_', 'git gerrit-').replace('_', '-')
-            desc = globals()[key].__doc__.strip().strip()
-            cmds.append((name, desc))
-    return cmds
+def format_change(template, change):
+    try:
+        return template.format(**change)
+    except KeyError as e:
+        raise GitGerritFormatError(e)
+    except ValueError as e:
+        raise GitGerritFormatError(e)
 
 
-def print_change(change, template='{number} {subject}', dump=False, out=None):
-    """
-    Format and print a change to the output stream.  Retry by printing just the
-    plain ASCII parts when the unicode encoding fails.
-
-    args:
-        change (dict): dictionary of data elements to be printed
-        template (str): a format template string
-        dump (bool): pprint the data instead of formatting it (intended for debugging)
-        out (file): output stream, defaults to stdout
-    returns:
-        None
-    """
-    template = cook(template)
-    for pass_ in (1, 2):
-        try:
-            if dump:
-                text = pprint.pformat(change)
-            else:
-                text = template.format(**change)
-            writeln(text, out=out)
-            return
-        except KeyError as e:
-            raise GitGerritFormatError(e)
-        except UnicodeEncodeError as e:
-            # Retry with plain ascii.
-            if pass_ == 1:
-                for key in change:
-                    change[key] = asciitize(change[key])
-            else:
-                raise GitGerritFormatError(e)
-
-
-def git_gerrit_version(argv=None):
+def main_git_gerrit_version(argv=None):
     """Print version and exit."""
+    if argv is None:
+        argv = sys.argv[1:]
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-version',
-        description=git_gerrit_version.__doc__.strip(),
+        description=main_git_gerrit_version.__doc__.strip(),
     )
     parser.parse_args(argv)
-    writeln(git_gerrit.VERSION)
+    print(git_gerrit.VERSION)
     return 0
 
 
-def git_gerrit_checkout(argv=None):
+def main_git_gerrit_checkout(argv=None):
     """Fetch then checkout by gerrit number."""
-    config = git_gerrit.Config()
-    branch = config.get('checkoutbranch', 'gerrit/{number}/{patchset}')
+    if argv is None:
+        argv = sys.argv[1:]
+    git = Git()
+    branch = git.config('checkoutbranch')
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-checkout',
-        description=git_gerrit_checkout.__doc__.strip(),
+        description=main_git_gerrit_checkout.__doc__.strip(),
         epilog="""
 git config options:
 
@@ -107,11 +75,11 @@ git config options:
     group.add_argument(
         '--branch',
         default=branch,
-        help='local branch to create (default: {0})'.format(branch),
+        help=f"local branch to create (default: {branch})",
     )
     group.add_argument(
         '--no-branch',
-        default=config.getbool('no-branch'),
+        default=git.config('no-branch'),
         action='store_true',
         help='do not create a local branch',
     )
@@ -121,19 +89,24 @@ git config options:
     args = vars(parser.parse_args(argv))
     number = args.pop('number')
     args['checkout'] = True
+
     try:
         git_gerrit.fetch(number, **args)
     except GitGerritError as e:
-        writeln(str(e), out=sys.stderr)
+        print(str(e), file=sys.stderr)
         return 1
 
+    return 0
 
-def git_gerrit_cherry_pick(argv=None):
+
+def main_git_gerrit_cherry_pick(argv=None):
     """Cherry pick from upstream branch by gerrit number to make a new gerrit."""
+    if argv is None:
+        argv = sys.argv[1:]
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-cherry-pick',
-        description=git_gerrit_cherry_pick.__doc__.strip(),
+        description=main_git_gerrit_cherry_pick.__doc__.strip(),
         epilog="""
 Notes:
 
@@ -169,21 +142,26 @@ Example:
     args = vars(parser.parse_args(argv))
     number = args['number']
     branch = args['branch']
+
     try:
         git_gerrit.cherry_pick(number, branch)
     except GitGerritError as e:
-        writeln(str(e), out=sys.stderr)
+        print(str(e), file=sys.stderr)
         return 1
 
+    return 0
 
-def git_gerrit_fetch(argv=None):
+
+def main_git_gerrit_fetch(argv=None):
     """Fetch by gerrit number."""
-    config = git_gerrit.Config()
-    branch = config.get('fetchbranch', 'gerrit/{number}/{patchset}')
+    if argv is None:
+        argv = sys.argv[1:]
+    git = Git()
+    branch = git.config('fetchbranch')
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-fetch',
-        description=git_gerrit_fetch.__doc__.strip(),
+        description=main_git_gerrit_fetch.__doc__.strip(),
         epilog="""
 git config options:
 
@@ -199,11 +177,11 @@ git config options:
     group.add_argument(
         '--branch',
         default=branch,
-        help='local branch to create (default: {0})'.format(branch),
+        help=f"local branch to create (default: {branch})",
     )
     group.add_argument(
         '--no-branch',
-        default=config.getbool('no-branch'),
+        default=git.config('no-branch'),
         action='store_true',
         help='do not create a local branch',
     )
@@ -212,56 +190,82 @@ git config options:
     )
     args = vars(parser.parse_args(argv))
     number = args.pop('number')
+
     try:
         git_gerrit.fetch(number, **args)
     except GitGerritError as e:
-        writeln(str(e), out=sys.stderr)
+        print(str(e), file=sys.stderr)
         return 1
 
+    return 0
 
-def git_gerrit_help(argv=None):
+
+def main_git_gerrit_help(argv=None):
     """List commands."""
+    if argv is None:
+        argv = sys.argv[1:]
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-help',
-        description=git_gerrit_help.__doc__.strip(),
+        description=main_git_gerrit_help.__doc__.strip(),
     )
+
     parser.parse_args(argv)
-    writeln('\nCommands for gerrit code review:\n')
-    for name, desc in commands():
-        writeln('    {0:27}  {1}'.format(name, desc))
-    writeln('\nShow command details with:\n')
-    writeln('    git gerrit-<command> -h')
+
+    # Walk the symbol list of this module to print a summary of commands.
+    print("")
+    print("Available commands:")
+    print("")
+    for symbol in sorted(globals().keys()):
+        if symbol.startswith("main_git_gerrit_"):
+            function = globals()[symbol]
+            name = symbol.replace("main_git_gerrit_", "git gerrit-").replace("_", "-")
+            desc = function.__doc__.strip()
+            print(f"    {name:27}  {desc}")
+    print("")
+    print("Show command help with:")
+    print("")
+    print("    git gerrit-<command> -h")
+    return 0
 
 
-def git_gerrit_install_hooks(argv=None):
+def main_git_gerrit_install_hooks(argv=None):
     """Install git hooks to create gerrit change-ids."""
+    if argv is None:
+        argv = sys.argv[1:]
+    git = Git()
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-install-hooks',
-        description=git_gerrit_install_hooks.__doc__.strip(),
+        description=main_git_gerrit_install_hooks.__doc__.strip(),
         epilog="""
 git config options:
 
   gerrit.host           Specifies the gerrit hostname (required).
 """,
     )
-    vars(parser.parse_args(argv))
+    parser.parse_args(argv)
+
     try:
-        git_gerrit.install_hooks()
+        git.download_hook("commit-msg")
+        git.write_hook("prepare-commit-msg")
     except GitGerritError as e:
-        writeln(str(e), out=sys.stderr)
+        print(str(e), file=sys.stderr)
         return 1
 
+    return 0
 
-def git_gerrit_log(argv=None):
+
+def main_git_gerrit_log(argv=None):
     """Show oneline log with gerrit numbers."""
-    config = git_gerrit.Config()
-    template = config.get('logformat', default='{number} {hash} {subject}')
+    if argv is None:
+        argv = sys.argv[1:]
+    git = Git()
+    template = git.config('logformat')
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-log',
-        description=git_gerrit_log.__doc__.strip(),
+        description=main_git_gerrit_log.__doc__.strip(),
         epilog="""
 Available --format template fields: number, hash, subject
 
@@ -274,7 +278,7 @@ git config options:
     parser.add_argument(
         '--format',
         default=template,
-        help='output format (default: "{0}")'.format(template),
+        help=f"output format (default: '{template}')",
     )
     parser.add_argument('-n', '--number', type=int, help='number of commits')
     parser.add_argument('-r', '--reverse', action='store_true', help='reverse order')
@@ -289,27 +293,32 @@ git config options:
     parser.add_argument('revision', nargs='?', help='revision range')
     args = vars(parser.parse_args(argv))
     template = args.pop('format')
+
     try:
-        for change in git_gerrit.log(**args):
-            print_change(change, template)
+        for commit in git_gerrit.log(**args):
+            print(format_change(template, commit))
     except GitGerritError as e:
-        writeln(str(e), out=sys.stderr)
+        print(str(e), file=sys.stderr)
         return 1
 
+    return 0
 
-def git_gerrit_query(argv=None):
+
+def main_git_gerrit_query(argv=None):
     """Search gerrit."""
-    config = git_gerrit.Config()
-    template = config.get('queryformat', default='{number} {subject}')
+    if argv is None:
+        argv = sys.argv[1:]
+    git = Git()
+    template = git.config('queryformat')
     fields_help = textwrap.fill(', '.join(sorted(git_gerrit.CHANGE_FIELDS)))
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-query',
-        description=git_gerrit_query.__doc__.strip(),
-        epilog="""
+        description=main_git_gerrit_query.__doc__.strip(),
+        epilog=f"""
 Available --format template fields:
 
-{0}
+{fields_help}
 
 git config options:
 
@@ -317,14 +326,12 @@ git config options:
   gerrit.project        Specifies the gerrit project name (required).
   gerrit.queryformat    Default git-gerrit-query --format value (optional).
   gerrit.remote         Remote name of the localref --format field (default: origin)
-""".format(
-            fields_help
-        ),
+""",
     )
 
     parser.add_argument(
         '-n',
-        '--number',
+        '--limit',
         dest='limit',
         metavar='<number>',
         type=int,
@@ -346,20 +353,28 @@ git config options:
     search = ' '.join(args.pop('term'))
     template = args.pop('format')
     dump = args.pop('dump')
+
     try:
         for change in git_gerrit.query(search, **args):
-            print_change(change, template, dump)
+            if dump:
+                pprint.pprint(change)
+            else:
+                print(format_change(template, change))
     except GitGerritError as e:
-        writeln(str(e), out=sys.stderr)
+        print(str(e), file=sys.stderr)
         return 1
 
+    return 0
 
-def git_gerrit_update(argv=None):
+
+def main_git_gerrit_update(argv=None):
     """Update gerrits matching search terms."""
+    if argv is None:
+        argv = sys.argv[1:]
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-update',
-        description=git_gerrit_update.__doc__.strip(),
+        description=main_git_gerrit_update.__doc__.strip(),
         epilog="""
 authentication required:
 
@@ -411,34 +426,32 @@ examples:
     dryrun = args.pop('dryrun')
     search = ' '.join(args.pop('term'))
 
-    changes = []
     try:
         for change in git_gerrit.query(search):
-            changes.append(change)
+            number = change['number']
+            subject = change['subject']
+            if dryrun:
+                print(f"Skipping (dry-run): {number} {subject}")
+            else:
+                print(f"Updating: {number} {subject}")
+                git_gerrit.update(number, **args)
     except GitGerritError as e:
-        writeln(str(e), out=sys.stderr)
+        print(str(e), file=sys.stderr)
         return 1
 
-    for change in changes:
-        try:
-            if dryrun:
-                writeln("Skipping: %s %s" % (change['_number'], change['subject']))
-            else:
-                writeln("Updating: %s %s" % (change['_number'], change['subject']))
-                git_gerrit.update(change['_number'], **args)
-        except GitGerritError as e:
-            writeln(str(e), out=sys.stderr)
-            return 1
+    return 0
 
 
-def git_gerrit_unpicked(argv=None):
+def main_git_gerrit_unpicked(argv=None):
     """Find gerrit numbers on upstream branch not cherry picked."""
-    config = git_gerrit.Config()
-    template = config.get('unpickedformat', default='{number} {hash} {subject}')
+    if argv is None:
+        argv = sys.argv[1:]
+    git = Git()
+    template = git.config('unpickedformat')
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-unpicked',
-        description=git_gerrit_unpicked.__doc__.strip(),
+        description=main_git_gerrit_unpicked.__doc__.strip(),
         epilog="""
 git config options:
 
@@ -458,9 +471,12 @@ git config options:
     )
     args = vars(parser.parse_args(argv))
     template = args.pop('format')
+
     try:
         for commit in git_gerrit.unpicked(**args):
-            print_change(commit, template)
+            print(format_change(template, commit))
     except GitGerritError as e:
-        writeln(str(e), out=sys.stderr)
+        print(str(e), file=sys.stderr)
         return 1
+
+    return 0

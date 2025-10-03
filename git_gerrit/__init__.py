@@ -33,10 +33,12 @@ from git_gerrit.error import (
 )
 from git_gerrit.core import (
     CHANGE_FIELDS,
+    LOG_FIELDS,
     cherry_pick,
     fetch,
     log,
     query,
+    sync,
     unpicked,
     update,
 )
@@ -44,6 +46,7 @@ from git_gerrit.core import (
 _hush_linter = [
     VERSION,
     CHANGE_FIELDS,
+    LOG_FIELDS,
     Git,
     GitGerritError,
     GitGerritConfigError,
@@ -53,6 +56,7 @@ _hush_linter = [
     fetch,
     log,
     query,
+    sync,
     unpicked,
     update,
 ]

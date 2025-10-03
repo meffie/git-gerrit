@@ -7,6 +7,7 @@ from git_gerrit.core import (
     fetch,
     log,
     query,
+    sync,
     unpicked,
     update,
 )
@@ -88,7 +89,7 @@ def test_log(mock_modules):
     # Mocked test data.
     assert got[0]["author"] == "Bob"
     assert got[0]["hash"] == "103629bb91"
-    assert got[0]["number"] == "-"
+    assert got[0]["number"] == ""
     assert got[0]["subject"] == "Use wrapper"
     assert got[1]["author"] == "Alice"
     assert got[1]["hash"] == "5b0775c48d"
@@ -99,3 +100,14 @@ def test_log(mock_modules):
 def test_unpicked(mock_modules):
     got = list(unpicked(downstream_branch="test-unpicked"))
     assert got == []
+
+
+def test_sync(capsys, mock_modules):
+    sync()
+    output = capsys.readouterr().out.splitlines()
+    print(output)
+    assert os.path.exists("mock-fetch")
+    with open("mock-fetch", "r") as f:
+        mock_fetch = f.read().splitlines()
+    assert mock_fetch[0] == "https://gerrit.example.org/mayhem"
+    assert mock_fetch[1] == "refs/changes/*:refs/changes/*"

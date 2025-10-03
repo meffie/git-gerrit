@@ -160,10 +160,29 @@ class Git:
         remote = f"https://{host}/{project}"
         return remote
 
-    def fetch(self, refname):
-        """Run git fetch to fetch a change the gerrit repo."""
-        remote = self.remote()
-        self.git.fetch(remote, refname)
+    def fetch(self, refspec, spinner=None):
+        """Run git fetch."""
+        errors = ""
+
+        def handle_output(text):
+            nonlocal errors
+            if "fatal:" in text:
+                errors += text
+            if spinner:
+                spinner.spin()
+
+        try:
+            self.git.fetch(
+                self.remote(),
+                refspec,
+                progress=True,
+                verbose=True,
+                _out=handle_output,
+                _err=handle_output,
+                _tee=True,
+            )
+        except sh.ErrorReturnCode as e:
+            raise GitGerritError(f"Command failed: git fetch: {e.exit_code}: {errors}")
 
     def checkout(self, refname):
         """Run git checkout to checkout a change."""
@@ -171,9 +190,28 @@ class Git:
 
     def log(self, refname=None, **options):
         """Run git log to show changes."""
+
+        def decode(line):
+            # Convert bytes to a str.  `sh` returns bytes when it is unable to
+            # decode using the codec from the current locale.
+            try:
+                return line.decode('utf-8')
+            except UnicodeDecodeError:
+                pass
+            try:
+                return line.decode('cp1252')
+            except UnicodeDecodeError:
+                pass
+            # Last resort. latin-1 maps all byte values so will
+            # not fail, but may produce garbage text.
+            return line.decode('latin-1', errors='ignore')
+
         if not refname:
             refname = "HEAD"
+
         for line in self.git.log(refname, _iter=True, **options):
+            if isinstance(line, bytes):
+                line = decode(line)
             yield line.rstrip()
 
     def cherry_pick(self, refname):
@@ -190,6 +228,13 @@ class Git:
             self.git.cherry_pick('-x', refname, _env=env)
         except sh.ErrorReturnCode:
             raise GitGerritError(f"Failed to cherry-pick {refname}")
+
+    def show_refs(self, pattern=".*", **options):
+        for line in self.git("show-ref", _iter=True, **options):
+            if m := re.match(f"^([0-9a-fA-F]+) ({pattern})$", line.rstrip()):
+                sha1 = m.group(1)
+                ref = m.group(2)
+                yield [sha1, ref]
 
     #
     # Odds and ends.
@@ -233,6 +278,23 @@ class Git:
         if to_ and from_:
             picked[to_] = from_
         return picked
+
+    def change_id(self, sha1):
+        change_id = None
+        format_ = "%(trailers:key=Change-Id)"
+        for line in self.log(sha1, max_count=1, pretty=format_):
+            m = re.match(r'Change-Id: (I[0-9a-fA-F]+)', line)
+            if m:
+                change_id = m.group(1)
+        return change_id
+
+    def cherry_picked_from(self, sha1):
+        xsha1 = None
+        for line in self.log(sha1, max_count=1, pretty="%B"):
+            m = re.match(r'^\(cherry picked from commit ([0-9a-fA-F]+)\)', line)
+            if m:
+                xsha1 = m.group(1)
+        return xsha1
 
     def _prepare_hook_path(self, name):
         git_dir = self.git_dir()

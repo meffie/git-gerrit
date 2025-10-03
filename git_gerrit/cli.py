@@ -280,12 +280,20 @@ def main_git_gerrit_log(argv=None):
         argv = sys.argv[1:]
     git = Git()
     template = git.config('logformat')
+    fields_help = textwrap.fill(', '.join(sorted(git_gerrit.LOG_FIELDS)))
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-log',
         description=main_git_gerrit_log.__doc__.strip(),
-        epilog="""
-Available --format template fields: number, hash, subject
+        epilog=f"""
+Available --format template fields:
+
+{fields_help}
+
+Python string format specifiers are supported in the --format template. For
+example, to print the numbers in a fixed with, filled with zeros:
+
+    git gerrit-log --format '{{number:08}}'
 
 git config options:
 
@@ -306,7 +314,7 @@ git config options:
         dest='shorthash',
         action='store_false',
         default=True,
-        help='show full sha1 hash',
+        help='show full SHA1 hash',
     )
     parser.add_argument('revision', nargs='?', help='revision range')
     args = vars(parser.parse_args(argv))
@@ -378,6 +386,40 @@ git config options:
                 pprint.pprint(change)
             else:
                 print(format_change(template, change))
+    except GitGerritError as e:
+        print(str(e), file=sys.stderr)
+        return 1
+
+    return 0
+
+
+def main_git_gerrit_sync(argv=None):
+    """Fetch all changes and update the local database."""
+    if argv is None:
+        argv = sys.argv[1:]
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        prog='git-gerrit-sync',
+        description=main_git_gerrit_sync.__doc__.strip(),
+        epilog="""
+git config options:
+
+  gerrit.host           Specifies the gerrit hostname (required).
+  gerrit.project        Specifies the gerrit project name (required).
+""",
+    )
+    parser.add_argument(
+        '--limit',
+        dest='limit',
+        metavar='<number>',
+        default=1000,
+        type=int,
+        help='limit the number of commits to scan',
+    )
+    args = vars(parser.parse_args(argv))
+
+    try:
+        git_gerrit.sync(**args)
     except GitGerritError as e:
         print(str(e), file=sys.stderr)
         return 1

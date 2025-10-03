@@ -13,6 +13,7 @@ from git_gerrit.cli import (
     main_git_gerrit_install_hooks,
     main_git_gerrit_log,
     main_git_gerrit_query,
+    main_git_gerrit_sync,
     main_git_gerrit_update,
     main_git_gerrit_unpicked,
 )
@@ -32,6 +33,7 @@ Available commands:
     git gerrit-install-hooks     Install git hooks to create gerrit change-ids.
     git gerrit-log               Show oneline log with gerrit numbers.
     git gerrit-query             Search gerrit.
+    git gerrit-sync              Fetch all changes and update the local database.
     git gerrit-unpicked          Find gerrit numbers on upstream branch not cherry picked.
     git gerrit-update            Update gerrits matching search terms.
     git gerrit-version           Print version and exit.
@@ -119,6 +121,11 @@ def test_query__fails_when_no_terms_given(capsys, mock_modules):
     assert "the following arguments are required: <term>" in stderr
 
 
+def test_sync(capsys, mock_modules):
+    exit_code = main_git_gerrit_sync([])
+    assert exit_code == 0
+
+
 def test_version__prints_a_version_string(capsys, mock_modules):
     exit_code = main_git_gerrit_version([])
     assert exit_code == 0
@@ -199,7 +206,7 @@ def test_log__succeeeds(capsys, mock_modules):
     stdout = capsys.readouterr().out
     lines = stdout.splitlines()
     # Check results from canned test data.
-    assert lines[0] == "- 103629bb91 Use wrapper"
+    assert lines[0] == " 103629bb91 Use wrapper"
     assert lines[1] == "16549 5b0775c48d config: Include afs/lock.h"
     assert lines[2] == "16541 30c9bddef9 afs: Free dynamically allocated memory"
 

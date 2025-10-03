@@ -99,3 +99,8 @@ def test_write_hook(git):
     mode = os.stat(".git/hooks/prepare-commit-msg").st_mode
     assert mode & stat.S_IXUSR != 0
     assert mode & stat.S_IXGRP != 0
+
+
+def test_change_id(git):
+    got = git.change_id("0" * 40)
+    assert got == "I68fd140aab7e65bec1ac537d19de89f9d32443c1"

@@ -33,6 +33,13 @@ class MockGitCommand(MockCommandBase):
         if args == ('show-ref', '--quiet', 'refs/heads/branch-is-missing'):
             sh.ErrorReturnCode.exit_code = 1
             raise sh.ErrorReturnCode("git show-ref", b"", b"")
+        if args == ('show-ref',):
+            return [
+                f"{1:040} refs/changes/01/0001/1",
+                f"{2:040} refs/changes/01/0001/2",
+                f"{3:040} refs/changes/01/0001/3",
+                f"{4:040} refs/changes/02/0002/1",
+            ]
         raise NotImplementedError(f"MockGitCommand: git {args}")
 
     def _write_args(self, name, args):
@@ -66,6 +73,7 @@ class MockGitCommand(MockCommandBase):
         kwargs.pop("_iter", None)  # Remove the magic sh keyword.
         options = kwargs.copy()
         pretty = options.pop("pretty", "")
+        options.pop("max_count", None)  # ignore for now
 
         if options is True:
             # Check for unnhandled options.
@@ -257,15 +265,21 @@ Date:   Wed Sep 10 15:03:14 2025 +0530
 5b0775c48db9d89a2e570c0a3417b240c265df6f
 30c9bddef972ced072771b17554cf0e8cf572970
 """,
-    "hash:%h%nsubject:%s%nauthor:%an%nemail:%ae%n%b%%%%": """\
+    "oid:%H%nhash:%h%nsubject:%s%nauthor:%an%nemail:%ae%nbody:%n%b%n%%%%": """\
+oid:103629bb91257ff5eba181fc82b81692e42e1954
 hash:103629bb91
 subject:Use wrapper
 author:Bob
+email:bob@example.com
+body:
 Replace the single test-runner wrapper with per-binary wrappers so each
 %%
+oid:5b0775c48db9d89a2e570c0a3417b240c265df6f
 hash:5b0775c48d
 subject:config: Include afs/lock.h
 author:Alice
+email:alice@example.com
+body:
 Many source files #include either src/afs/lock.h for kernel code (aka
 <afs/lock.h>), or src/lwp/lock.h for userspace code (aka <lock.h>).
 
@@ -279,9 +293,12 @@ Change-Id: Id25480174c7fa8465357cc40f9a63e24c9271f95
 Reviewed-on: https://gerrit.openafs.org/16549
 Tested-by: BuildBot <buildbot@example.com>
 %%
+oid:30c9bddef972ced072771b17554cf0e8cf572970
 hash:30c9bddef9
 subject:afs: Free dynamically allocated memory
 author:alice
+email:alice@example.com
+body:
 The function ktc_ListTokensEx() allocates memory for cellName,
 which was not being freed in token.c
 
@@ -291,11 +308,13 @@ Change-Id: I24dd9a04efe1f13432a8a1b1570a979c7a62d405
 Reviewed-on: https://gerrit.openafs.org/16541
 %%
 """,
-    "hash:%H%nsubject:%s%nauthor:%an%nemail:%ae%n%b%%%%": """\
+    "oid:%H%nhash:%H%nsubject:%s%nauthor:%an%nemail:%ae%nbody:%n%b%n%%%%": """\
+oid:5b0775c48db9d89a2e570c0a3417b240c265df6f
 hash:5b0775c48db9d89a2e570c0a3417b240c265df6f
 subject:config: Include afs/lock.h, not lock.h
 author:Alice
 email:alice@example.com
+body:
 Many source files #include either src/afs/lock.h for kernel code (aka
 <afs/lock.h>), or src/lwp/lock.h for userspace code (aka <lock.h>).
 
@@ -312,10 +331,12 @@ Reviewed-by: Bob <bob@example.com>
 Tested-by: BuildBot <buildbot@example.com>
 Reviewed-by: Alice <alice@example.com>
 %%
+oid:30c9bddef972ced072771b17554cf0e8cf572970
 hash:30c9bddef972ced072771b17554cf0e8cf572970
 subject:afs: Free dynamically allocated memory for cellName in token.c
 author:alice
 email:alice@example.com
+body:
 The function ktc_ListTokensEx() allocates memory for cellName,
 which was not being freed in token.c
 
@@ -330,10 +351,12 @@ Reviewed-by: Charles <charles@example.com>
 Tested-by: Charles <charles@example.com>
 Reviewed-by: Charles <charles@example.com>
 %%
+oid:84534b5cf468f93ff1e83c8148af90b011124815
 hash:84534b5cf468f93ff1e83c8148af90b011124815
 subject:Linux: Use a stable dentry name in d_revalidate
 author:Charles
 email:charles@example.com
+body:
 Accessing a stable dentry name (dentry.d_name) directly requires taking
 the d_lock, which can only be held for a short periods of time and
 cannot be easily used in d_revalidate
@@ -380,9 +403,30 @@ Change-Id: Ic99b1e5d7667f6841feea78ccf94db43ede40356
 Reviewed-on: https://gerrit.openafs.org/16528
 Reviewed-by: Alice <alice@example.com>
 Reviewed-by: Charles <charles@example.com>
-Reviewed-by: Charles <charles@example.com>
 Reviewed-by: Bob <bob@example.com>
 Tested-by: Bob <bob@example.com>
 %%
+""",
+    "%(trailers:key=Change-Id)": """\
+Change-Id: I68fd140aab7e65bec1ac537d19de89f9d32443c1
+
+""",
+    "%B": """\
+Foo bar baz
+
+Update all foos in the tree, and the baz file.
+
+Reviewed-on: https://gerrit.openafs.org/12345
+Reviewed-by: Alice <alice@example.com>
+Reviewed-by: Charles <charles@example.com>
+Reviewed-by: Bob <bob@example.com>
+(cherry picked from commit 75a3a91f5086c011e91bf638e2cc8c03ee373266)
+
+Change-Id: Ibc6dab9f4a99d693ea03891ed7222fed9a07a85a
+Reviewed-on: https://gerrit.openafs.org/12345
+Reviewed-by: Alice <alice@example.com>
+Reviewed-by: Charles <charles@example.com>
+Reviewed-by: Bob <bob@example.com>
+
 """,
 }

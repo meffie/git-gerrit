@@ -31,6 +31,8 @@ import urllib.parse
 import sh
 
 from git_gerrit.git import Git
+from git_gerrit.db import GitGerritDB
+from git_gerrit.spinner import Spinner
 from git_gerrit.error import (
     GitGerritError,
     GitGerritNotFoundError,
@@ -63,6 +65,20 @@ CHANGE_FIELDS = [
     'host',
     'url',
 ]
+
+LOG_FIELDS = (
+    'author',
+    'change_id',
+    'email',
+    'hash',
+    'number',
+    'patchset',
+    'picked_from',
+    'picked_to',
+    'ref',
+    'reviewed_on',
+    'subject',
+)
 
 
 def cherry_pick(number, branch='origin/master'):
@@ -164,52 +180,103 @@ def log(number=None, reverse=False, shorthash=True, revision=None):
         shorthash (bool): short sha1
         revision (str):   git revision to log (default is HEAD)
     yields:
-        dictionary with keys: 'hash', 'subject', 'number', 'author', 'email'
+        dictionary with keys LOG_FIELDS
     """
     git = Git()
 
-    if shorthash:
-        hashfmt = '%h'
-    else:
-        hashfmt = '%H'
-    options = {}
-    options['pretty'] = f"hash:{hashfmt}%nsubject:%s%nauthor:%an%nemail:%ae%n%b%%%%"
-    options['reverse'] = reverse
+    def blank():
+        return {name: "" for name in LOG_FIELDS}
+
+    def populate_gerrit_fields(db, fields, commit_id):
+        change = db.get_change_by_commit(commit_id)
+        if change:
+            number = int(change['number'])
+            patchset = int(change['patchset'])
+            fields['number'] = number
+            fields['patchset'] = patchset
+            fields['ref'] = f"refs/changes/{number % 100:02}/{number}/{patchset}"
+            if change['change_id']:
+                fields['change_id'] = change['change_id']
+                if change['cherry_picked_from']:
+                    cpf = db.get_change_by_comit(change['cherry_picked_from'])
+                    if cpf:
+                        fields['picked_from'] = cpf['number']
+        picks = []
+        for commit in db.get_cherry_picks_by_commit(commit_id):
+            change = db.get_change_by_commit(commit['commit_id'])
+            if change:
+                picks.append(str(change['number']))
+        if picks:
+            fields['picked_to'] = ",".join(picks)
+
+    # Assemble the --pretty format template.
+    tags = {
+        "oid": "%H",
+        "hash": "%h" if shorthash else "%H",
+        "subject": "%s",
+        "author": "%an",
+        "email": "%ae",
+        "body": "%n%b",
+    }
+    # terms = [":".join(t) for t in tags.items()]
+    terms = []
+    for k, v in tags.items():
+        terms.append(f"{k}:{v}")
+    terms.append("%%%%")  # End of body marker
+    options = {
+        'pretty': "%n".join(terms),
+        'reverse': reverse,
+    }
     if number:
         options['max-count'] = number
 
-    fields = {'hash': '', 'subject': '', 'number': '-', 'author': '', 'email': ''}
-    for line in git.log(revision, **options):
-        m = re.match(r'^hash:(.*)', line)
-        if m:
-            fields['hash'] = m.group(1)
-            continue
-        m = re.match(r'^subject:(.*)', line)
-        if m:
-            fields['subject'] = m.group(1)
-            continue
-        m = re.match(r'^author:(.*)', line)
-        if m:
-            fields['author'] = m.group(1)
-            continue
-        m = re.match(r'^email:(.*)', line)
-        if m:
-            fields['email'] = m.group(1)
-            continue
-        m = re.match(r'^Reviewed-on: .*/([0-9]+)$', line)
-        if m:
-            fields['number'] = int(m.group(1))  # get last one
-            continue
-        m = re.match(r'^%%$', line)
-        if m:
-            yield fields
-            fields = {
-                'hash': '',
-                'subject': '',
-                'number': '-',
-                'author': '',
-                'email': '',
-            }
+    with GitGerritDB() as db:
+        fields = blank()
+        for line in git.log(revision, **options):
+            m = re.match(r'^oid:(.*)', line)
+            if m:
+                populate_gerrit_fields(db, fields, m.group(1))
+                continue
+            m = re.match(r'^hash:(.*)', line)
+            if m:
+                fields['hash'] = m.group(1)
+                continue
+            m = re.match(r'^subject:(.*)', line)
+            if m:
+                fields['subject'] = m.group(1)
+                continue
+            m = re.match(r'^author:(.*)', line)
+            if m:
+                fields['author'] = m.group(1)
+                continue
+            m = re.match(r'^email:(.*)', line)
+            if m:
+                fields['email'] = m.group(1)
+                continue
+            m = re.match(r'^body:', line)  # Start of body.
+            if m:
+                continue
+            m = re.match(r'^Reviewed-on: .*/([0-9]+)$', line)
+            if m:
+                # Save the last Reviewed-on one seen in the body,
+                # there can be more than one in backported commits.
+                fields['reviewed_on'] = int(m.group(1))
+                continue
+            m = re.match(r'^Change-Id: (I[0-9a-fA-F]+)$', line)
+            if m:
+                # Save the first one seen. Normally each commit has zero or one
+                # change-id trailers.
+                if fields['change_id']:
+                    fields['change_id'] = m.group(1)
+                continue
+            m = re.match(r'^%%$', line)  # End of body.
+            if m:
+                # Fallback to the reviewed-on trailer if the change
+                # was not found in the database.
+                if not fields['number']:
+                    fields['number'] = fields['reviewed_on']
+                yield fields
+                fields = blank()
 
 
 def _flatten_change(change, host, remote):
@@ -408,3 +475,40 @@ def unpicked(upstream_branch='HEAD', downstream_branch=None):
     for commit in log(revision=upstream_branch, shorthash=False):
         if commit['hash'] in x:
             yield commit
+
+
+def sync(limit=None):
+    git = Git()
+
+    with Spinner(f"Fetching changes from {git.remote()}") as spinner:
+        git.fetch("refs/changes/*:refs/changes/*", spinner)
+
+    with Spinner("Updating local database") as spinner:
+        with GitGerritDB() as db:
+            pattern = r"refs/changes/\d\d/\d+/\d+"
+            for commit_id, refname in git.show_refs(pattern):
+                parts = refname.split("/")
+                number = int(parts[3])
+                patchset = int(parts[4])
+                db.add_change(number, patchset, commit_id)
+                spinner.spin()
+
+    # It is not practical to read every commit message, and normally, we only
+    # care about the current patchsets, so scan just the current patchsets
+    # (that is the max patchset number of each change number). Also, limit the
+    # number of changes to be scanned, since we normally care about jus the
+    # most recent numbers. This amoritizes the scanning, so the first
+    # git-gerrit-sync will scan a reasonable number of changes, and later syncs
+    # will process older changes.
+    with Spinner("Scanning commit messages") as spinner:
+        with GitGerritDB() as db:
+            for c in db.get_current_patchsets(limit=limit):
+                if c['flags'] != 1:
+                    commit_id = c['commit_id']
+                    change_id = git.change_id(commit_id)
+                    picked_from = git.cherry_picked_from(commit_id)
+                    db.update_commit(commit_id, change_id, picked_from, 1)
+                    spinner.spin()
+
+    print("Done.")
+    return 0

@@ -21,7 +21,7 @@ setup(
     long_description=open('README.rst').read(),
     author='Michael Meffie',
     author_email='mmeffie@sinenomine.net',
-    license='BSD',
+    license='BSD-2-Clause',
     url='https://github.com/meffie/git-gerrit',
     packages=['git_gerrit'],
     install_requires=[
@@ -46,7 +46,6 @@ setup(
         'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: BSD License',
         'Operating System :: POSIX',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',

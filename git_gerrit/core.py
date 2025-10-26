@@ -30,8 +30,6 @@ import pygerrit2.rest
 import urllib.parse
 import sh
 
-# from urllib.parse import urlencode
-
 from git_gerrit.git import Git
 from git_gerrit.error import (
     GitGerritError,

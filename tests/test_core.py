@@ -29,8 +29,22 @@ def test_query(mock_modules):
     assert "details" not in change
 
 
-def test_fetch(capsys, mock_modules):
+def test_fetch__without_branch(capsys, mock_modules):
     fetch(12345)
+    output = capsys.readouterr().out.splitlines()
+    assert output[0] == "searching for gerrit 12345"
+    assert output[1] == "found patchset number 7"
+    assert output[2] == "fetching 12345,7"
+    assert output[3] == "fetched 12345,7 to FETCH_HEAD"
+    assert os.path.exists("mock-fetch")
+    with open("mock-fetch", "r") as f:
+        mock_fetch = f.read().splitlines()
+    assert mock_fetch[0] == "https://gerrit.example.org/mayhem"
+    assert mock_fetch[1] == "refs/changes/45/12345/7"
+
+
+def test_fetch__with_branch(capsys, mock_modules):
+    fetch(12345, branch="gerrit/{number}/{patchset}")
     output = capsys.readouterr().out.splitlines()
     assert output[0] == "searching for gerrit 12345"
     assert output[1] == "found patchset number 7"

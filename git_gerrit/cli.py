@@ -57,8 +57,14 @@ def main_git_gerrit_checkout(argv=None):
     """Fetch then checkout by gerrit number."""
     if argv is None:
         argv = sys.argv[1:]
+
     git = Git()
     branch = git.config('checkoutbranch')
+    if not branch:
+        branch_desc = "[do not create a branch]"
+    else:
+        branch_desc = branch
+
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-checkout',
@@ -75,7 +81,7 @@ git config options:
     group.add_argument(
         '--branch',
         default=branch,
-        help=f"local branch to create (default: {branch})",
+        help=f"local branch to create (default: {branch_desc})",
     )
     group.add_argument(
         '--no-branch',
@@ -89,6 +95,9 @@ git config options:
     args = vars(parser.parse_args(argv))
     number = args.pop('number')
     args['checkout'] = True
+    no_branch = args.pop('no_branch')
+    if no_branch:
+        args['branch'] = None
 
     try:
         git_gerrit.fetch(number, **args)
@@ -156,8 +165,14 @@ def main_git_gerrit_fetch(argv=None):
     """Fetch by gerrit number."""
     if argv is None:
         argv = sys.argv[1:]
+
     git = Git()
     branch = git.config('fetchbranch')
+    if not branch:
+        branch_desc = "[do not create a branch]"
+    else:
+        branch_desc = branch
+
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog='git-gerrit-fetch',
@@ -177,7 +192,7 @@ git config options:
     group.add_argument(
         '--branch',
         default=branch,
-        help=f"local branch to create (default: {branch})",
+        help=f"local branch to create (default: {branch_desc})",
     )
     group.add_argument(
         '--no-branch',
@@ -190,6 +205,9 @@ git config options:
     )
     args = vars(parser.parse_args(argv))
     number = args.pop('number')
+    no_branch = args.pop('no_branch')
+    if no_branch:
+        args['branch'] = None
 
     try:
         git_gerrit.fetch(number, **args)

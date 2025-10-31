@@ -87,11 +87,11 @@ class Git:
         },
         "fetchbranch": {
             "type": "string",
-            "default": "gerrit/{number}/{patchset}",
+            "default": "",
         },
         "checkoutbranch": {
             "type": "string",
-            "default": "gerrit/{number}/{patchset}",
+            "default": "",
         },
     }
 

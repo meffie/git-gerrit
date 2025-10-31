@@ -108,8 +108,7 @@ def current_change(number):
 
 def fetch(
     number,
-    no_branch=False,
-    branch='gerrit/{number}/{patchset}',
+    branch=None,
     checkout=False,
 ):
     """
@@ -117,9 +116,7 @@ def fetch(
 
     args:
         number (int):     legacy gerrit number
-        no_branch (bool): skip local branch when True
         branch (str):     local branch name to fetch to.
-                          default: 'gerrit/{number}/{patchset}'
         checkout (bool):  checkout after fetch
     returns:
         None
@@ -133,18 +130,15 @@ def fetch(
     patchset = change['patchset']
     print(f"found patchset number {patchset}")
 
-    if no_branch:
+    if not branch:
         refs = str(change['ref'])
-        print(f"fetching {number} patchset {patchset}")
+        print(f"fetching {number},{patchset}")
         git.fetch(refs)
-        print(f"fetched {number} to FETCH_HEAD")
+        print(f"fetched {number},{patchset} to FETCH_HEAD")
         if checkout:
             git.checkout("FETCH_HEAD")
             print("checked out FETCH_HEAD")
     else:
-        if not branch:
-            print('no branch specified')
-            return 1
         branch = branch.format(**change)
         if git.does_branch_exist(branch):
             print(f"branch {branch} already exists")

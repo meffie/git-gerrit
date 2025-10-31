@@ -126,8 +126,19 @@ def test_version__prints_a_version_string(capsys, mock_modules):
     assert re.search(r'^\d+\.\d+\.\d+', stdout)
 
 
-def test_checkout__succeeds(capsys, mock_modules):
+def test_checkout__without_branch_succeeds(capsys, mock_modules):
     exit_code = main_git_gerrit_checkout(["12345"])
+    assert exit_code == 0
+    assert os.path.exists("mock-checkout")
+    with open("mock-checkout", "r") as f:
+        mock_checkout = f.read().rstrip()
+    assert mock_checkout == "FETCH_HEAD"
+
+
+def test_checkout__to_branch_succeeds(capsys, mock_modules):
+    exit_code = main_git_gerrit_checkout(
+        ["12345", "--branch", "gerrit/{number}/{patchset}"]
+    )
     assert exit_code == 0
     assert os.path.exists("mock-checkout")
     with open("mock-checkout", "r") as f:
@@ -142,8 +153,20 @@ def test_cherry_pick__fails_when_gerrit_is_not_found(capsys, mock_modules):
     assert "Failed to find gerrit number" in stderr
 
 
-def test_fetch__to_branch_succeeds(capsys, mock_modules):
+def test_fetch__without_branch_succeeds(capsys, mock_modules):
     exit_code = main_git_gerrit_fetch(["12345"])
+    assert exit_code == 0
+    assert os.path.exists("mock-fetch")
+    with open("mock-fetch", "r") as f:
+        mock_fetch = f.read().splitlines()
+    assert mock_fetch[0] == "https://gerrit.example.org/mayhem"
+    assert mock_fetch[1] == "refs/changes/45/12345/7"
+
+
+def test_fetch__to_branch_succeeds(capsys, mock_modules):
+    exit_code = main_git_gerrit_fetch(
+        ["12345", "--branch", "gerrit/{number}/{patchset}"]
+    )
     assert exit_code == 0
     assert os.path.exists("mock-fetch")
     with open("mock-fetch", "r") as f:

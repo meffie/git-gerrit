@@ -131,7 +131,7 @@ Checkout a gerrit by number::
 
 Cherry-pick a gerrit onto the current branch::
 
-    $ git gerrit-fetch --no-branch 13001 && git cherry-pick FETCH_HEAD
+    $ git gerrit-fetch 13001 && git cherry-pick FETCH_HEAD
 
 Show gerrit numbers in the checked out branch in the local git repo::
 

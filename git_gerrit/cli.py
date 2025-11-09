@@ -104,6 +104,8 @@ git config options:
     except GitGerritError as e:
         print(str(e), file=sys.stderr)
         return 1
+    except (KeyboardInterrupt, BrokenPipeError):
+        return 1
 
     return 0
 
@@ -156,6 +158,8 @@ Example:
         git_gerrit.cherry_pick(number, branch)
     except GitGerritError as e:
         print(str(e), file=sys.stderr)
+        return 1
+    except (KeyboardInterrupt, BrokenPipeError):
         return 1
 
     return 0
@@ -214,6 +218,8 @@ git config options:
     except GitGerritError as e:
         print(str(e), file=sys.stderr)
         return 1
+    except (KeyboardInterrupt, BrokenPipeError):
+        return 1
 
     return 0
 
@@ -270,6 +276,8 @@ git config options:
     except GitGerritError as e:
         print(str(e), file=sys.stderr)
         return 1
+    except (KeyboardInterrupt, BrokenPipeError):
+        return 1
 
     return 0
 
@@ -325,6 +333,8 @@ git config options:
             print(format_change(template, commit))
     except GitGerritError as e:
         print(str(e), file=sys.stderr)
+        return 1
+    except (KeyboardInterrupt, BrokenPipeError):
         return 1
 
     return 0
@@ -389,6 +399,8 @@ git config options:
     except GitGerritError as e:
         print(str(e), file=sys.stderr)
         return 1
+    except (KeyboardInterrupt, BrokenPipeError):
+        return 1
 
     return 0
 
@@ -422,6 +434,8 @@ git config options:
         git_gerrit.sync(**args)
     except GitGerritError as e:
         print(str(e), file=sys.stderr)
+        return 1
+    except (KeyboardInterrupt, BrokenPipeError):
         return 1
 
     return 0
@@ -498,6 +512,8 @@ examples:
     except GitGerritError as e:
         print(str(e), file=sys.stderr)
         return 1
+    except (KeyboardInterrupt, BrokenPipeError):
+        return 1
 
     return 0
 
@@ -537,6 +553,8 @@ git config options:
             print(format_change(template, commit))
     except GitGerritError as e:
         print(str(e), file=sys.stderr)
+        return 1
+    except (KeyboardInterrupt, BrokenPipeError):
         return 1
 
     return 0

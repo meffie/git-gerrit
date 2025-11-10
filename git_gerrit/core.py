@@ -198,7 +198,7 @@ def log(number=None, reverse=False, shorthash=True, revision=None):
             if change['change_id']:
                 fields['change_id'] = change['change_id']
                 if change['cherry_picked_from']:
-                    cpf = db.get_change_by_comit(change['cherry_picked_from'])
+                    cpf = db.get_change_by_commit(change['cherry_picked_from'])
                     if cpf:
                         fields['picked_from'] = cpf['number']
         picks = []
@@ -475,6 +475,26 @@ def unpicked(upstream_branch='HEAD', downstream_branch=None):
     for commit in log(revision=upstream_branch, shorthash=False):
         if commit['hash'] in x:
             yield commit
+
+
+def show(number):
+    git = Git()
+
+    results = {}
+    with GitGerritDB() as db:
+        change = db.get_current_patchset_by_number(number)
+        if change is None:
+            raise GitGerritNotFoundError(f"Change {number} not found.")
+
+    commit_id = change['commit_id']
+    number = int(change['number'])
+    patchset = int(change['current_patchset'])
+    results['ref'] = f"refs/changes/{number % 100:02}/{number}/{patchset}"
+
+    proc = git.git("show", commit_id)
+    results['show'] = str(proc)
+
+    return results
 
 
 def sync(limit=None):

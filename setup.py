@@ -37,6 +37,7 @@ setup(
             'git-gerrit-install-hooks=git_gerrit.cli:main_git_gerrit_install_hooks',
             'git-gerrit-log=git_gerrit.cli:main_git_gerrit_log',
             'git-gerrit-query=git_gerrit.cli:main_git_gerrit_query',
+            'git-gerrit-show=git_gerrit.cli:main_git_gerrit_show',
             'git-gerrit-sync=git_gerrit.cli:main_git_gerrit_sync',
             'git-gerrit-unpicked=git_gerrit.cli:main_git_gerrit_unpicked',
             'git-gerrit-update=git_gerrit.cli:main_git_gerrit_update',

@@ -7,11 +7,12 @@ from git_gerrit.core import (
     fetch,
     log,
     query,
+    show,
     sync,
     unpicked,
     update,
 )
-from git_gerrit.error import GitGerritError
+from git_gerrit.error import GitGerritError, GitGerritNotFoundError
 
 
 def test_query(mock_modules):
@@ -100,6 +101,12 @@ def test_log(mock_modules):
 def test_unpicked(mock_modules):
     got = list(unpicked(downstream_branch="test-unpicked"))
     assert got == []
+
+
+def test_show(mock_modules):
+    expected = "Change 12345 not found."
+    with pytest.raises(GitGerritNotFoundError, match=expected):
+        show(12345)
 
 
 def test_sync(capsys, mock_modules):

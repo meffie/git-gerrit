@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2024 Sine Nomine Associates
+# Copyright (c) 2018-2025 Sine Nomine Associates
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -396,6 +396,31 @@ git config options:
                 pprint.pprint(change)
             else:
                 print(format_change(template, change))
+    except GitGerritError as e:
+        print(str(e), file=sys.stderr)
+        return 1
+    except (KeyboardInterrupt, BrokenPipeError):
+        return 1
+
+    return 0
+
+
+def main_git_gerrit_show(argv=None):
+    """Show commit for gerrit change number."""
+    if argv is None:
+        argv = sys.argv[1:]
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        prog='git-gerrit-show',
+        description=main_git_gerrit_show.__doc__.strip(),
+    )
+    parser.add_argument('number', metavar='<number>', type=int, help='gerrit number')
+    args = parser.parse_args(argv)
+
+    try:
+        results = git_gerrit.show(args.number)
+        print("ref:", results['ref'])
+        print(results['show'])
     except GitGerritError as e:
         print(str(e), file=sys.stderr)
         return 1

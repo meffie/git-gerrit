@@ -9,7 +9,6 @@ from git_gerrit.core import (
     query,
     show,
     sync,
-    unpicked,
     update,
 )
 from git_gerrit.error import GitGerritError, GitGerritNotFoundError
@@ -96,11 +95,6 @@ def test_log(mock_modules):
     assert got[1]["hash"] == "5b0775c48d"
     assert got[1]["number"] == 16549
     assert got[1]["subject"] == "config: Include afs/lock.h"
-
-
-def test_unpicked(mock_modules):
-    got = list(unpicked(downstream_branch="test-unpicked"))
-    assert got == []
 
 
 def test_show(mock_modules):

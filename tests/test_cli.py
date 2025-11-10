@@ -16,7 +16,6 @@ from git_gerrit.cli import (
     main_git_gerrit_show,
     main_git_gerrit_sync,
     main_git_gerrit_update,
-    main_git_gerrit_unpicked,
 )
 
 
@@ -36,7 +35,6 @@ Available commands:
     git gerrit-query             Search gerrit.
     git gerrit-show              Show commit for gerrit change number.
     git gerrit-sync              Fetch all changes and update the local database.
-    git gerrit-unpicked          Find gerrit numbers on upstream branch not cherry picked.
     git gerrit-update            Update gerrits matching search terms.
     git gerrit-version           Print version and exit.
 
@@ -216,11 +214,6 @@ def test_log__succeeeds(capsys, mock_modules):
     assert lines[0] == " 103629bb91 Use wrapper"
     assert lines[1] == "16549 5b0775c48d config: Include afs/lock.h"
     assert lines[2] == "16541 30c9bddef9 afs: Free dynamically allocated memory"
-
-
-def test_unpicked(capsys, mock_modules):
-    exit_code = main_git_gerrit_unpicked(["stable"])
-    assert exit_code == 0
 
 
 def test_update(capsys, mock_modules):

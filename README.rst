@@ -24,7 +24,6 @@ Commands
     git gerrit-show              Show commit for gerrit change number.
     git gerrit-sync              Fetch all changes and update the local database.
     git gerrit-update            Update gerrits matching search terms.
-    git gerrit-unpicked          Find gerrit numbers on upstream branch not cherry picked.
     git gerrit-version           Print version and exit.
 
 Installation
@@ -162,15 +161,6 @@ Show just the gerrit numbers and subjects in the local git repo::
     12958: Suppress statement not reached warnings under Solaris Studio
     12957: afs: squash empty declaration warning
     12955: libafs: git ignore build artifacts on Solaris
-
-Show the commits on the master branch which have not been cherry-picked on to
-the stable branch. (Gerrits may already exists for them.)::
-
-    $ git gerrit-unpicked -u origin/master origin/openafs-stable-1_8_x
-    13656 4eeed830fa31b7b8b5487ba619acbc8d30642aaa afscp: Link against opr/roken/hcrypto
-    13659 f5f59cd8d336b153e2b762bb7afd16e6ab1b1ee2 util: serverLog using memory after free
-    13665 1210a8d6d96db2d84595d35ef81ec5d176de05e8 LINUX: Run the 'sparse' checker if available
-    ...
 
 Add reviewers to the **foobar** topic::
 

@@ -40,7 +40,6 @@ from git_gerrit.core import (
     query,
     show,
     sync,
-    unpicked,
     update,
 )
 
@@ -59,6 +58,5 @@ _hush_linter = [
     query,
     show,
     sync,
-    unpicked,
     update,
 ]

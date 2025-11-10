@@ -67,24 +67,6 @@ def test_does_branch_exist__returns_false_branch_is_missing(git):
     assert git.does_branch_exist("branch-is-missing") is False
 
 
-def test_get_hashes(git):
-    expected = set(
-        {
-            '103629bb91257ff5eba181fc82b81692e42e1954',
-            '5b0775c48db9d89a2e570c0a3417b240c265df6f',
-            '30c9bddef972ced072771b17554cf0e8cf572970',
-        }
-    )
-    got = git.get_hashes("test-get-hashes")
-    assert got == expected
-
-
-def test_get_cherry_picked__returns_empty_when_none_found(git):
-    expected = {}
-    got = git.get_cherry_picked("test-get-cherry-picked")
-    assert got == expected
-
-
 def test_download_hook(git):
     git.download_hook("commit-msg")
     assert os.path.exists(".git/hooks/commit-msg")

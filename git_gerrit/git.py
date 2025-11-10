@@ -248,37 +248,6 @@ class Git:
         except sh.ErrorReturnCode:
             return False
 
-    def get_hashes(self, branch):
-        """Returns the commit sha1 hashes for the given branch as a set."""
-        hashes = set()
-        for line in self.log(branch, pretty="%H"):
-            hashes.add(line)
-        return hashes
-
-    def get_cherry_picked(self, branch):
-        """
-        Find which commits have been cherry picked. Returns a dictionary; for
-        each entry, the key is the commit sha1 of the commit on the branch, and
-        value is the cherry picked from commit sha1.
-        """
-        picked = {}
-        to_ = None
-        from_ = None
-        for line in self.log(branch):
-            m = re.match(r'commit (\w+)', line)
-            if m:
-                if to_ and from_:
-                    picked[to_] = from_
-                to_ = m.group(1)
-                from_ = None
-                continue
-            m = re.match(r'\s+\(cherry picked from commit (\w+)\)', line)
-            if m:
-                from_ = m.group(1)  # Save the last one see in this commit message.
-        if to_ and from_:
-            picked[to_] = from_
-        return picked
-
     def change_id(self, sha1):
         change_id = None
         format_ = "%(trailers:key=Change-Id)"

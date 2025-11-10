@@ -439,44 +439,6 @@ def update(
     return 0
 
 
-def unpicked(upstream_branch='HEAD', downstream_branch=None):
-    """
-    Find commits on the master ('upstream') branch which are not on the stable
-    ('downstream') branch and have not been cherry picked on to the stable
-    branch.
-
-    args:
-        upstream_branch:
-        downstream_branch:
-    """
-    git = Git()
-
-    if not downstream_branch:
-        raise ValueError('Downstream branch name is required.')
-
-    # Lookup the sha1s for each branch.
-    u = git.get_hashes(upstream_branch)
-    d = git.get_hashes(downstream_branch)
-
-    # Find which commits have been cherry picked.
-    #
-    # Conventionally, commits are cherry picked from the upstream branch on to
-    # the downstream branch, but in rare cases cherry picks can go in the
-    # opposite direction. A change is merged is merged on the "stable" branch
-    # first and cherry picked on to the master branch later.
-    cu = set(git.get_cherry_picked(upstream_branch).keys())
-    cd = set(git.get_cherry_picked(downstream_branch).values())
-
-    # Commits not in the downstream branch, and not cherry picked to the down
-    # stream branch (nor cherry picked from the downstream branch).
-    x = u - (d | cd | cu)
-
-    # Output them in git log order.
-    for commit in log(revision=upstream_branch, shorthash=False):
-        if commit['hash'] in x:
-            yield commit
-
-
 def show(number):
     git = Git()
 

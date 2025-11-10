@@ -39,7 +39,6 @@ setup(
             'git-gerrit-query=git_gerrit.cli:main_git_gerrit_query',
             'git-gerrit-show=git_gerrit.cli:main_git_gerrit_show',
             'git-gerrit-sync=git_gerrit.cli:main_git_gerrit_sync',
-            'git-gerrit-unpicked=git_gerrit.cli:main_git_gerrit_unpicked',
             'git-gerrit-update=git_gerrit.cli:main_git_gerrit_update',
             'git-gerrit-version=git_gerrit.cli:main_git_gerrit_version',
         ],

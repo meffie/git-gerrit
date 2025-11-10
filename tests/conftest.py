@@ -166,7 +166,7 @@ def mock_pygerrit2(monkeypatch, change_test_data):
 @pytest.fixture
 def mock_urlrequest(monkeypatch):
 
-    def urlretrieve(url, path):
+    def urlretrieve(url, path, reporthook=None):
         with open(path, "w") as f:
             f.write("#!/bin/sh\n")
 

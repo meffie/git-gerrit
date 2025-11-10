@@ -273,27 +273,33 @@ class Git:
         hook_path = os.path.join(hook_dir, name)
         return hook_path
 
-    def download_hook(self, name):
+    def download_hook(self, name, spinner=None):
         """Download a script from the gerrit server into the git hooks directory."""
+
+        def report_progress(block_num, block_size, total_size):
+            if spinner:
+                spinner.spin()
+
         hook_path = self._prepare_hook_path(name)
-        if os.path.exists(hook_path):
-            print(f"{hook_path} is already present.")
-        else:
+        if not os.path.exists(hook_path):
             host = self.config('host')
             url = f"https://{host}/tools/hooks/{name}"
-            print(f"Downloading {url} to {hook_path} ... ")
-            urllib.request.urlretrieve(url, hook_path)
+            urllib.request.urlretrieve(url, hook_path, report_progress)
             os.chmod(hook_path, 0o755)
+            if spinner:
+                spinner.spin()
 
-    def write_hook(self, name):
+    def write_hook(self, name, spinner=None):
         """Write a script into the git hooks directory."""
         if name not in HOOKS:
             raise ValueError(f"Unknown hook name {name}")
 
         hook_path = self._prepare_hook_path(name)
-        if os.path.exists(hook_path):
-            print(f"{hook_path} is already present.")
-        else:
+        if not os.path.exists(hook_path):
             with open(hook_path, 'w') as f:
                 f.write(HOOKS[name])
+                if spinner:
+                    spinner.spin()
             os.chmod(hook_path, 0o755)
+            if spinner:
+                spinner.spin()

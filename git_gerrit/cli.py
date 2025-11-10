@@ -27,6 +27,7 @@ import textwrap
 
 import git_gerrit
 from git_gerrit.git import Git
+from git_gerrit.spinner import Spinner
 from git_gerrit.error import GitGerritError, GitGerritFormatError
 
 
@@ -271,8 +272,10 @@ git config options:
     parser.parse_args(argv)
 
     try:
-        git.download_hook("commit-msg")
-        git.write_hook("prepare-commit-msg")
+        with Spinner("Downloading 'commit-msg' git hook.") as spinner:
+            git.download_hook("commit-msg", spinner)
+        with Spinner("Writing 'prepare-commit-msg' git hook.") as spinner:
+            git.write_hook("prepare-commit-msg", spinner)
     except GitGerritError as e:
         print(str(e), file=sys.stderr)
         return 1

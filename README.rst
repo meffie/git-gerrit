@@ -20,8 +20,8 @@ Commands
     git gerrit-help              List commands.
     git gerrit-install-hooks     Install git hooks to create gerrit change-ids.
     git gerrit-log               Show oneline log with gerrit numbers.
+    git gerrit-number            Show info for a gerrit change number.
     git gerrit-query             Search gerrit.
-    git gerrit-show              Show commit for gerrit change number.
     git gerrit-sync              Fetch all changes and update the local database.
     git gerrit-update            Update gerrits matching search terms.
     git gerrit-version           Print version and exit.

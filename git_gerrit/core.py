@@ -122,6 +122,46 @@ def current_change(number):
     return change
 
 
+def get_current_change(number):
+    """
+    Lookup the current change in the local database.
+    """
+    with GitGerritDB() as db:
+        change = db.get_current_patchset_by_number(number)
+        if change is None:
+            raise GitGerritNotFoundError(f"Change {number} not found.")
+
+        # Convert cherry picked from hash to the gerrit number.
+        cpf = change['cherry_picked_from']
+        change['cherry_picked_from'] = None
+        if cpf:
+            from_ = db.get_change_by_commit(cpf)
+            if from_:
+                change['cherry_picked_from'] = from_['number']
+                change['cherry_picked_from_hash'] = cpf
+        else:
+            change['cherry_picked_from'] = None
+            change['cherry_picked_from_hash'] = None
+
+        # Find the cherry picked to numbers.
+        picks = set()
+        commit_id = change['commit_id']
+        for commit in db.get_cherry_picks_by_commit(commit_id):
+            to = db.get_change_by_commit(commit['commit_id'])
+            if to:
+                picks.add(to['number'])
+        if picks:
+            picked_to = [p for p in sorted(picks)]
+            change['cherry_picked_to'] = picked_to
+        else:
+            change['cherry_picked_to'] = []
+
+    number = change['number']
+    patchset = change['current_patchset']
+    change['ref'] = f"refs/changes/{number % 100:02}/{number}/{patchset}"
+    return change
+
+
 def fetch(
     number,
     branch=None,
@@ -201,13 +241,14 @@ def log(number=None, reverse=False, shorthash=True, revision=None):
                     cpf = db.get_change_by_commit(change['cherry_picked_from'])
                     if cpf:
                         fields['picked_from'] = cpf['number']
-        picks = []
+        picks = set()
         for commit in db.get_cherry_picks_by_commit(commit_id):
             change = db.get_change_by_commit(commit['commit_id'])
             if change:
-                picks.append(str(change['number']))
+                picks.add(change['number'])
         if picks:
-            fields['picked_to'] = ",".join(picks)
+            picked_to = [str(p) for p in sorted(picks)]
+            fields['picked_to'] = ",".join(picked_to)
 
     # Assemble the --pretty format template.
     tags = {
@@ -218,7 +259,6 @@ def log(number=None, reverse=False, shorthash=True, revision=None):
         "email": "%ae",
         "body": "%n%b",
     }
-    # terms = [":".join(t) for t in tags.items()]
     terms = []
     for k, v in tags.items():
         terms.append(f"{k}:{v}")
@@ -437,26 +477,6 @@ def update(
         ssh('-p', str(port), host, 'gerrit', 'set-reviewers', *args)
 
     return 0
-
-
-def show(number):
-    git = Git()
-
-    results = {}
-    with GitGerritDB() as db:
-        change = db.get_current_patchset_by_number(number)
-        if change is None:
-            raise GitGerritNotFoundError(f"Change {number} not found.")
-
-    commit_id = change['commit_id']
-    number = int(change['number'])
-    patchset = int(change['current_patchset'])
-    results['ref'] = f"refs/changes/{number % 100:02}/{number}/{patchset}"
-
-    proc = git.git("show", commit_id)
-    results['show'] = str(proc)
-
-    return results
 
 
 def sync(limit=None):

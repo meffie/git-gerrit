@@ -36,9 +36,9 @@ from git_gerrit.core import (
     LOG_FIELDS,
     cherry_pick,
     fetch,
+    get_current_change,
     log,
     query,
-    show,
     sync,
     update,
 )
@@ -54,9 +54,9 @@ _hush_linter = [
     GitGerritNotFoundError,
     cherry_pick,
     fetch,
+    get_current_change,
     log,
     query,
-    show,
     sync,
     update,
 ]

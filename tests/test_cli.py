@@ -12,8 +12,8 @@ from git_gerrit.cli import (
     main_git_gerrit_help,
     main_git_gerrit_install_hooks,
     main_git_gerrit_log,
+    main_git_gerrit_number,
     main_git_gerrit_query,
-    main_git_gerrit_show,
     main_git_gerrit_sync,
     main_git_gerrit_update,
 )
@@ -32,8 +32,8 @@ Available commands:
     git gerrit-help              List commands.
     git gerrit-install-hooks     Install git hooks to create gerrit change-ids.
     git gerrit-log               Show oneline log with gerrit numbers.
+    git gerrit-number            Show info for a gerrit change number.
     git gerrit-query             Search gerrit.
-    git gerrit-show              Show info for a gerrit change number.
     git gerrit-sync              Fetch all changes and update the local database.
     git gerrit-update            Update gerrits matching search terms.
     git gerrit-version           Print version and exit.
@@ -121,8 +121,8 @@ def test_query__fails_when_no_terms_given(capsys, mock_modules):
     assert "the following arguments are required: <term>" in stderr
 
 
-def test_show(capsys, mock_modules):
-    exit_code = main_git_gerrit_show(["12345"])
+def test_number(capsys, mock_modules):
+    exit_code = main_git_gerrit_number(["12345"])
     assert exit_code == 1
 
 

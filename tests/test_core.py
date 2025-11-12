@@ -5,9 +5,9 @@ from git_gerrit.core import (
     cherry_pick,
     current_change,
     fetch,
+    get_current_change,
     log,
     query,
-    show,
     sync,
     update,
 )
@@ -97,10 +97,10 @@ def test_log(mock_modules):
     assert got[1]["subject"] == "config: Include afs/lock.h"
 
 
-def test_show(mock_modules):
+def test_get_current_change__not_found(mock_modules):
     expected = "Change 12345 not found."
     with pytest.raises(GitGerritNotFoundError, match=expected):
-        show(12345)
+        get_current_change(12345)
 
 
 def test_sync(capsys, mock_modules):

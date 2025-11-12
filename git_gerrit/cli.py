@@ -409,14 +409,14 @@ git config options:
     return 0
 
 
-def main_git_gerrit_show(argv=None):
+def main_git_gerrit_number(argv=None):
     """Show info for a gerrit change number."""
     if argv is None:
         argv = sys.argv[1:]
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        prog='git-gerrit-show',
-        description=main_git_gerrit_show.__doc__.strip(),
+        prog='git-gerrit-number',
+        description=main_git_gerrit_number.__doc__.strip(),
     )
     parser.add_argument(
         'number', metavar='<number>', type=int, help="Gerrit number to show"
@@ -426,29 +426,30 @@ def main_git_gerrit_show(argv=None):
     group.add_argument('--ref', action='store_true', help="Show git ref")
     group.add_argument('--change-id', action='store_true', help="Show gerrit id")
     group.add_argument(
-        '--picked-from',
+        '--cherry-picked-from',
         action='store_true',
         help="Show cherry picked from gerrit number",
     )
     group.add_argument(
-        '--picked-to', action='store_true', help="Show cherry picked to gerrit numbers"
+        '--cherry-picked-to',
+        action='store_true',
+        help="Show cherry picked to gerrit numbers",
     )
     args = parser.parse_args(argv)
 
     try:
-        change = git_gerrit.show(args.number)
+        change = git_gerrit.get_current_change(args.number)
         if args.hash:
-            print(change['commit_id'])
+            print(change['commit_id'] or "")
         elif args.ref:
-            print(change['ref'])
+            print(change['ref'] or "")
         elif args.change_id:
-            print(change['change_id'])
-        elif args.picked_from:
-            for p in change['picked_from']:
-                print(p)
-        elif args.picked_to:
-            for p in change['picked_to']:
-                print(p)
+            print(change['change_id'] or "")
+        elif args.cherry_picked_from:
+            print(change['cherry_picked_from'] or "")
+        elif args.cherry_picked_to:
+            for p in change['cherry_picked_to']:
+                print(p or "")
         else:
             print(json.dumps(change, indent=4))
     except GitGerritError as e:

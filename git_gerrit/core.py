@@ -201,13 +201,14 @@ def log(number=None, reverse=False, shorthash=True, revision=None):
                     cpf = db.get_change_by_commit(change['cherry_picked_from'])
                     if cpf:
                         fields['picked_from'] = cpf['number']
-        picks = []
+        picks = set()
         for commit in db.get_cherry_picks_by_commit(commit_id):
             change = db.get_change_by_commit(commit['commit_id'])
             if change:
-                picks.append(str(change['number']))
+                picks.add(change['number'])
         if picks:
-            fields['picked_to'] = ",".join(picks)
+            picked_to = [str(p) for p in sorted(picks)]
+            fields['picked_to'] = ",".join(picked_to)
 
     # Assemble the --pretty format template.
     tags = {
@@ -218,7 +219,6 @@ def log(number=None, reverse=False, shorthash=True, revision=None):
         "email": "%ae",
         "body": "%n%b",
     }
-    # terms = [":".join(t) for t in tags.items()]
     terms = []
     for k, v in tags.items():
         terms.append(f"{k}:{v}")
@@ -440,23 +440,24 @@ def update(
 
 
 def show(number):
-    git = Git()
-
-    results = {}
     with GitGerritDB() as db:
         change = db.get_current_patchset_by_number(number)
         if change is None:
             raise GitGerritNotFoundError(f"Change {number} not found.")
+        commit_id = change['commit_id']
+        picks = set()
+        for commit in db.get_cherry_picks_by_commit(commit_id):
+            to = db.get_change_by_commit(commit['commit_id'])
+            if to:
+                picks.add(to['number'])
+        if picks:
+            picked_to = [p for p in sorted(picks)]
+            change['picked_to'] = picked_to
 
-    commit_id = change['commit_id']
-    number = int(change['number'])
-    patchset = int(change['current_patchset'])
-    results['ref'] = f"refs/changes/{number % 100:02}/{number}/{patchset}"
-
-    proc = git.git("show", commit_id)
-    results['show'] = str(proc)
-
-    return results
+    number = change['number']
+    patchset = change['current_patchset']
+    change['ref'] = f"refs/changes/{number % 100:02}/{number}/{patchset}"
+    return change
 
 
 def sync(limit=None):

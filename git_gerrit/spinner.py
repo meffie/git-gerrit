@@ -27,7 +27,6 @@ class BaseSpinner:
         self.message = message
         self.success = success
         self.error = error
-        self.start()
 
     def start(self):
         pass
@@ -71,16 +70,15 @@ class SimpleSpinner(BaseSpinner):
     def __init__(self, message="Loading...", update_rate=10):
         if update_rate < 1:
             raise ValueError(f"Invalid update_rate {update_rate}")
-        self.message = message
+        super().__init__(message)
+        self.update_rate = update_rate
+        self.spin_count = 0
+        self.spinner_index = 0
+
+    def start(self):
         self.spinner_chars = ['|', '/', '-', '\\']
         self.success_char = " "
         self.error_char_ = "x"
-        self.spinner_index = 0
-        self.update_rate = update_rate
-        self.spin_count = 0
-        super().__init__(message)
-
-    def start(self):
         self._write_frame()
 
     def spin(self):
@@ -115,12 +113,46 @@ class FancySpinner(SimpleSpinner):
 
     def __init__(self, message="Loading...", update_rate=10):
         super().__init__(message, update_rate)
-        self.success_char = "✔"
-        self.error_char = "✘"
+        self.colors = {
+            "red": "\033[91m",
+            "green": "\033[92m",
+            "yellow": "\033[93m",
+            "blue": "\033[94m",
+            "magenta": "\033[95m",
+            "cyan": "\033[96m",
+            "white": "\033[97m",
+            "reset": "\033[0m",
+        }
+        self.last_frame = ""
 
     def start(self):
         self.spinner_chars = ['⣷', '⣯', '⣟', '⡿', '⢿', '⣻', '⣽', '⣾']
+        self.success_char = "✔"
+        self.error_char = "✘"
         self._write_frame()
+
+    def stop(self, message, success=True):
+        """Stop the spinner, clears the line, and prints a final message."""
+        clear_line = ' ' * len(self.last_frame)
+        sys.stdout.write(f'\r{clear_line}\r')
+        reset = self.colors['reset']
+        if success:
+            color = self.colors['green']
+            frame = self.success_char
+        else:
+            color = self.colors['red']
+            frame = self.error_char
+        print(f"\r{color}{frame}{reset} {self.message} {message}")
+        sys.stdout.flush()
+
+    def _write_frame(self):
+        """Write the current animation frame to stdout."""
+        frame = self.spinner_chars[self.spinner_index]
+        color = self.colors['blue']
+        reset = self.colors['reset']
+        self.last_frame = f"\r{color}{frame}{reset} {self.message} "
+        sys.stdout.write(self.last_frame)
+        sys.stdout.flush()
 
 
 def Spinner(message="Loading...", update_rate=10):

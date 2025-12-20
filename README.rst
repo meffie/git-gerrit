@@ -12,7 +12,7 @@ with the **pygerrit2** package to access the Gerrit REST API.
 Commands
 ========
 
-.. code-block:: console
+**git-gerrit** commands::
 
     git gerrit-checkout          Fetch then checkout by gerrit number.
     git gerrit-cherry-pick       Cherry pick from upstream branch by gerrit number to make a new gerrit.
@@ -30,23 +30,38 @@ Installation
 ============
 
 .. _pipx: https://pipx.pypa.io/stable/
+.. _uv: https://github.com/astral-sh/uv
 
-Install with `pipx`_::
+The recommended way to install **git-gerrit** is with `uv`_ or `pipx`_.
 
-    $ pipx install git-gerrit
+To install with ``uv``, run the following as a regular user:
 
-Be sure your ``PATH`` has been updated to run **pipx** installed commands::
+.. code-block:: console
 
-    $ pipx ensurepath
+    uv tool install git-gerrit
+    uv tool update-shell
 
-If **pipx** is not available, then install in a project local virtualenv::
+The ``uv tool update-shell`` command adds the installed commands to your
+shell's PATH.  Restart your shell after running ``update-shell``.
+
+To install with ``pipx_``, run the following as a regular user:
+
+.. code-block:: console
+
+    pipx install git-gerrit
+    pipx ensurepath
+
+The ``pipx ensurepath`` command adds the installed commands to your shell's
+PATH.  Restart you shell after running ``ensurepath``.
+
+Alternatively, you can install **git-gerrit** directly into a local virtual
+environment with ``pip``::
 
     $ cd <my-project-directory>
     $ python3 -m venv .venv
     $ source .venv/bin/activate
     (.venv) $ pip install -U pip setuptools
     (.venv) $ pip install git-gerrit
-
 
 Setup
 =====

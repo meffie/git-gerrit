@@ -74,6 +74,16 @@ Setup a local OpenAFS git repo::
     $ git config --local gerrit.project openafs
     $ git gerrit-install-hooks
 
+Fetch all of the change commits from the upstream gerrit system to your local
+repository and create the local sqlite database. This is a heavy weight operation
+and is only needed for **git gerrit-log** and **git gerrit-number**::
+
+    $ git gerrit-sync
+    ✔ Fetching changes from https://gerrit.example.com/example
+    ✔ Updating local database
+    ✔ Scanning commit messages
+    Done.
+
 Find open gerrits on the master branch::
 
     $ git gerrit-query is:open branch:master
@@ -136,14 +146,14 @@ Cherry-pick a gerrit onto the current branch::
 
 Show gerrit numbers in the checked out branch in the local git repo::
 
-    $ git gerrit-log
+    $ git gerrit-log -n3
     12958 f47cb2d Suppress statement not reached warnings under Solaris Studio
     12957 306f0f3 afs: squash empty declaration warning
     12955 e006609 libafs: git ignore build artifacts on Solaris
 
 Show gerrit numbers by a revision in the local git repo::
 
-    $ git gerrit-log openafs-stable-1_8_0
+    $ git gerrit-log -n3 openafs-stable-1_8_0
     12953 a08327f Update NEWS for 1.8.0 final release
     12938 acb0e84 afs_pioctl: avoid -Wpointer-sign
     12950 b73863b LINUX: fix RedHat 7.5 ENOTDIR issues
@@ -157,7 +167,7 @@ Show gerrit numbers by a range of revisions in the local git repo::
 
 Show just the gerrit numbers and subjects in the local git repo::
 
-    $ git gerrit-log --format='{number}: {subject}'
+    $ git gerrit-log -n3 --format='{number}: {subject}'
     12958: Suppress statement not reached warnings under Solaris Studio
     12957: afs: squash empty declaration warning
     12955: libafs: git ignore build artifacts on Solaris

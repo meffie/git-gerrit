@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Sine Nomine Associates
+# Copyright (c) 2025-2026 Sine Nomine Associates
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,7 @@ from git_gerrit.git import Git
 
 DATABASE = "git-gerrit.db"
 MAGIC = 0x67697467  # "gitg"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 MIGRATION_SCRIPTS = [
     """
     CREATE TABLE changes (
@@ -40,6 +40,24 @@ MIGRATION_SCRIPTS = [
         commit_picked_from TEXT,    /* Not unique, may be NULL */
         commit_flags INTEGER,
         FOREIGN KEY (commit_id) REFERENCES commits(change_commit_id)
+    );
+    """,
+    """
+    ALTER TABLE changes RENAME TO gerrit_patchsets;
+    ALTER TABLE gerrit_patchsets RENAME COLUMN change_number TO number;
+    ALTER TABLE gerrit_patchsets RENAME COLUMN change_patchset TO patchset;
+    ALTER TABLE gerrit_patchsets RENAME COLUMN change_commit_id TO commit_id;
+
+    ALTER TABLE commits RENAME COLUMN commit_change_id TO change_id;
+    ALTER TABLE commits RENAME COLUMN commit_picked_from TO cherry_picked_from;
+    ALTER TABLE commits RENAME COLUMN commit_flags TO flags;
+
+    CREATE TABLE gerrit_changes (
+        number INTEGER,
+        current_patchset INTEGER,
+        change_id TEXT NOT NULL, /* todo: unique */
+        merged_as TEXT,  /* NULL if not merged */
+        PRIMARY KEY (number)
     );
     """,
 ]
@@ -163,9 +181,9 @@ class GitGerritDB:
             data = None
         return data
 
-    def add_change(self, number, patchset, commit_id):
+    def add_patchset(self, number, patchset, commit_id):
         """
-        Adds a new change to the database.
+        Adds a new patchset to the database.
 
         Args:
             number (int): The change number.
@@ -176,18 +194,33 @@ class GitGerritDB:
             cursor.execute(
                 """
                 INSERT OR IGNORE INTO commits
-                (commit_id, commit_flags)
+                (commit_id, flags)
                 VALUES (?, 0)
                 """,
                 (commit_id,),
             )
             cursor.execute(
                 """
-                INSERT OR IGNORE INTO changes
-                (change_number, change_patchset, change_commit_id)
+                INSERT OR IGNORE INTO gerrit_patchsets
+                (number, patchset, commit_id)
                 VALUES (?, ?, ?)
                 """,
                 (number, patchset, commit_id),
+            )
+            self._dirty = True
+
+    def add_or_update_change(self, number, current_patchset, change_id):
+        with Cursor(self) as cursor:
+            cursor.execute(
+                """
+                INSERT INTO gerrit_changes (number, current_patchset, change_id)
+                VALUES (?, ?, ?)
+                ON CONFLICT(number)
+                DO UPDATE SET
+                    current_patchset = excluded.current_patchset,
+                    change_id = excluded.change_id
+                """,
+                (number, current_patchset, change_id),
             )
             self._dirty = True
 
@@ -205,7 +238,7 @@ class GitGerritDB:
             cursor.execute(
                 """
                 UPDATE commits
-                SET commit_change_id = ?, commit_picked_from = ?, commit_flags = ?
+                SET change_id = ?, cherry_picked_from = ?, flags = ?
                 WHERE commit_id == ?
                 """,
                 (change_id, picked_from, flags, commit_id),
@@ -214,13 +247,16 @@ class GitGerritDB:
 
     def get_current_patchsets(self, limit=None):
         """
-        Retrieves the current patchsets for all changes.
+        Retrieves the current patchset of every change.
+
+        Yields one row per change number: its highest-numbered patchset
+        joined with the commit details, ordered by change number descending.
 
         Args:
-            limit (int, optional): The maximum number of patchsets to retrieve.
+            limit (int, optional): The maximum number of changes to retrieve.
 
         Yields:
-            dict: A dictionary representing a patchset.
+            dict: A dictionary representing the current patchset of a change.
         """
         if self._dirty:
             self._conn.commit()
@@ -235,16 +271,16 @@ class GitGerritDB:
             cursor.execute(
                 f"""
                 SELECT
-                    ch.change_number AS number,
-                    MAX(ch.change_patchset) AS current_patchset,
-                    ch.change_commit_id AS commit_id,
-                    co.commit_change_id AS change_id,
-                    co.commit_picked_from AS cherry_picked_from,
-                    co.commit_flags AS flags
-                FROM changes AS ch
-                LEFT JOIN commits AS co ON co.commit_id = ch.change_commit_id
-                GROUP BY ch.change_number
-                ORDER BY ch.change_number DESC
+                    ps.number AS number,
+                    MAX(ps.patchset) AS current_patchset,
+                    ps.commit_id AS commit_id,
+                    co.change_id AS change_id,
+                    co.cherry_picked_from AS cherry_picked_from,
+                    co.flags AS flags
+                FROM gerrit_patchsets AS ps
+                LEFT JOIN commits AS co ON co.commit_id = ps.commit_id
+                GROUP BY ps.number
+                ORDER BY ps.number DESC
                 {limit_clause}
                 """
             )
@@ -269,17 +305,17 @@ class GitGerritDB:
             cursor.execute(
                 """
                 SELECT
-                    ch.change_number AS number,
-                    MAX(ch.change_patchset) AS current_patchset,
-                    ch.change_commit_id AS commit_id,
-                    co.commit_change_id AS change_id,
-                    co.commit_picked_from AS cherry_picked_from,
-                    co.commit_flags AS flags
-                FROM changes AS ch
-                LEFT JOIN commits AS co ON co.commit_id = ch.change_commit_id
-                WHERE ch.change_number = ?
-                GROUP BY ch.change_number
-                ORDER BY ch.change_number DESC
+                    ps.number AS number,
+                    MAX(ps.patchset) AS current_patchset,
+                    ps.commit_id AS commit_id,
+                    co.change_id AS change_id,
+                    co.cherry_picked_from AS cherry_picked_from,
+                    co.flags AS flags
+                FROM gerrit_patchsets AS ps
+                LEFT JOIN commits AS co ON co.commit_id = ps.commit_id
+                WHERE ps.number = ?
+                GROUP BY ps.number
+                ORDER BY ps.number DESC
                 LIMIT 1
                 """,
                 (number,),
@@ -307,15 +343,15 @@ class GitGerritDB:
             cursor.execute(
                 """
                 SELECT
-                    ch.change_number AS number,
-                    ch.change_patchset AS patchset,
-                    ch.change_commit_id AS commit_id,
-                    co.commit_change_id AS change_id,
-                    co.commit_picked_from AS cherry_picked_from,
-                    co.commit_flags AS flags
-                FROM changes AS ch
-                LEFT JOIN commits AS co ON co.commit_id = ch.change_commit_id
-                WHERE ch.change_commit_id = ?
+                    ps.number AS number,
+                    ps.patchset AS patchset,
+                    ps.commit_id AS commit_id,
+                    co.change_id AS change_id,
+                    co.cherry_picked_from AS cherry_picked_from,
+                    co.flags AS flags
+                FROM gerrit_patchsets AS ps
+                LEFT JOIN commits AS co ON co.commit_id = ps.commit_id
+                WHERE ps.commit_id = ?
                 LIMIT 1
                 """,
                 (commit_id,),
@@ -345,11 +381,11 @@ class GitGerritDB:
                 """
                 SELECT
                     commit_id,
-                    commit_change_id,
-                    commit_picked_from,
-                    commit_flags
+                    change_id,
+                    cherry_picked_from,
+                    flags
                 FROM commits
-                WHERE commit_picked_from = ?
+                WHERE cherry_picked_from = ?
                 """,
                 (commit_picked_from,),
             )

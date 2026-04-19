@@ -12,12 +12,12 @@ def db(mock_modules):
 @pytest.fixture
 def staged_db(mock_modules):
     with GitGerritDB() as db:
-        db.add_change(101, 1, "aaa")
-        db.add_change(101, 2, "bbb")
-        db.add_change(102, 1, "ccc")
-        db.add_change(103, 1, "ddd")
-        db.add_change(103, 2, "eee")
-        db.add_change(103, 3, "fff")
+        db.add_patchset(101, 1, "aaa")
+        db.add_patchset(101, 2, "bbb")
+        db.add_patchset(102, 1, "ccc")
+        db.add_patchset(103, 1, "ddd")
+        db.add_patchset(103, 2, "eee")
+        db.add_patchset(103, 3, "fff")
         db.update_commit("bbb", "I101", None, 0)
         db.update_commit("ccc", "I102", None, 1)
         db.update_commit("fff", "I103", "ggg", 0)
@@ -35,31 +35,31 @@ def test_db_init__creates_tables(db):
     assert len(names) != 0
 
 
-def test_db_add_change__inserts_into_tables(db):
-    db.add_change(123, 1, "abc")
+def test_db_add_patchset__inserts_into_tables(db):
+    db.add_patchset(123, 1, "abc")
     with Cursor(db) as cursor:
-        cursor.execute("SELECT * FROM changes WHERE change_number=123")
+        cursor.execute("SELECT * FROM gerrit_patchsets WHERE number=123")
         change = cursor.fetchone()
         assert change is not None
-        assert change["change_patchset"] == 1
-        assert change["change_commit_id"] == "abc"
+        assert change["patchset"] == 1
+        assert change["commit_id"] == "abc"
 
         cursor.execute("SELECT * FROM commits WHERE commit_id='abc'")
         commit = cursor.fetchone()
         assert commit is not None
-        assert commit["commit_flags"] == 0
+        assert commit["flags"] == 0
 
 
 def test_db_update_commit__updates_commit_row(db):
-    db.add_change(123, 1, "abc")
+    db.add_patchset(123, 1, "abc")
     db.update_commit("abc", "I123", "def", 1)
     with Cursor(db) as cursor:
         cursor.execute("SELECT * FROM commits WHERE commit_id='abc'")
         commit = cursor.fetchone()
         assert commit is not None
-        assert commit["commit_change_id"] == "I123"
-        assert commit["commit_picked_from"] == "def"
-        assert commit["commit_flags"] == 1
+        assert commit["change_id"] == "I123"
+        assert commit["cherry_picked_from"] == "def"
+        assert commit["flags"] == 1
 
 
 def test_db_get_current_patchsets__returns_latest_patchsets(staged_db):

@@ -407,10 +407,6 @@ Reviewed-by: Bob <bob@example.com>
 Tested-by: Bob <bob@example.com>
 %%
 """,
-    "%(trailers:key=Change-Id)": """\
-Change-Id: I68fd140aab7e65bec1ac537d19de89f9d32443c1
-
-""",
     "%B": """\
 Foo bar baz
 
@@ -422,6 +418,8 @@ Reviewed-by: Charles <charles@example.com>
 Reviewed-by: Bob <bob@example.com>
 (cherry picked from commit 75a3a91f5086c011e91bf638e2cc8c03ee373266)
 
+FIXES 135591
+FIXES 135592
 Change-Id: Ibc6dab9f4a99d693ea03891ed7222fed9a07a85a
 Reviewed-on: https://gerrit.openafs.org/12345
 Reviewed-by: Alice <alice@example.com>

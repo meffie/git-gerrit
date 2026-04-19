@@ -84,5 +84,7 @@ def test_write_hook(git):
 
 
 def test_change_id(git):
+    # The Change-Id is found even though the footer also contains non-trailer
+    # "FIXES" lines that defeat git's %(trailers) parser.
     got = git.change_id("0" * 40)
-    assert got == "I68fd140aab7e65bec1ac537d19de89f9d32443c1"
+    assert got == "Ibc6dab9f4a99d693ea03891ed7222fed9a07a85a"

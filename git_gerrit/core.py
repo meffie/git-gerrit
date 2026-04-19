@@ -492,25 +492,38 @@ def sync(limit=None):
                 parts = refname.split("/")
                 number = int(parts[3])
                 patchset = int(parts[4])
-                db.add_change(number, patchset, commit_id)
+                db.add_patchset(number, patchset, commit_id)
                 spinner.spin()
 
     # It is not practical to read every commit message, and normally, we only
     # care about the current patchsets, so scan just the current patchsets
     # (that is the max patchset number of each change number). Also, limit the
-    # number of changes to be scanned, since we normally care about jus the
-    # most recent numbers. This amoritizes the scanning, so the first
+    # number of changes to be scanned, since we normally care about just the
+    # most recent numbers. This amortizes the scanning, so the first
     # git-gerrit-sync will scan a reasonable number of changes, and later syncs
     # will process older changes.
+    no_change_id = 0
     with Spinner("Scanning commit messages") as spinner:
         with GitGerritDB() as db:
             for c in db.get_current_patchsets(limit=limit):
                 if c['flags'] != 1:
+                    number = c['number']
+                    current_patchset = c['current_patchset']
                     commit_id = c['commit_id']
                     change_id = git.change_id(commit_id)
+                    if change_id is None:
+                        # Some early changes were merged before gerrit enforced
+                        # a Change-Id trailer. Record the commit, but skip the
+                        # gerrit_changes row, which is keyed by Change-Id.
+                        no_change_id += 1
+                    else:
+                        db.add_or_update_change(number, current_patchset, change_id)
+
                     picked_from = git.cherry_picked_from(commit_id)
                     db.update_commit(commit_id, change_id, picked_from, 1)
                     spinner.spin()
 
+    if no_change_id:
+        print(f"Skipped {no_change_id} change(s) with no Change-Id.")
     print("Done.")
     return 0

@@ -73,11 +73,23 @@ class MockGitCommand(MockCommandBase):
         kwargs.pop("_iter", None)  # Remove the magic sh keyword.
         options = kwargs.copy()
         pretty = options.pop("pretty", "")
-        options.pop("max_count", None)  # ignore for now
+        # Options the mock accepts but does not act on: the canned log data
+        # is fixed, so ordering (reverse) and truncation (max-count) are not
+        # emulated. Real sh drops reverse=False before it reaches git.
+        options.pop("reverse", None)
+        options.pop("max_count", None)
+        options.pop("max-count", None)
 
-        if options is True:
-            # Check for unnhandled options.
+        if options:
+            # Fail on options the mock does not understand.
             raise NotImplementedError(f"MockGitCommand: git log {args} {kwargs}")
+
+        refname = args[0] if args else None
+
+        # The current patchset of change 2 (commit 00..04) was merged before
+        # gerrit required a Change-Id trailer.
+        if refname == f"{4:040}" and pretty == "%B":
+            pretty = "%B-no-change-id"
 
         try:
             log = self._log_test_data(pretty)
@@ -425,6 +437,12 @@ Reviewed-on: https://gerrit.openafs.org/12345
 Reviewed-by: Alice <alice@example.com>
 Reviewed-by: Charles <charles@example.com>
 Reviewed-by: Bob <bob@example.com>
+
+""",
+    "%B-no-change-id": """\
+Revert "viced: avoid crash if missing volume header"
+
+This reverts commit 2b40e6d2abbf842e6823661b94cfa9aa833b9990
 
 """,
 }

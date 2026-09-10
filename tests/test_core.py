@@ -11,6 +11,7 @@ from git_gerrit.core import (
     sync,
     update,
 )
+from git_gerrit.db import GitGerritDB, Cursor
 from git_gerrit.error import GitGerritError, GitGerritNotFoundError
 
 
@@ -105,10 +106,28 @@ def test_get_current_change__not_found(mock_modules):
 
 def test_sync(capsys, mock_modules):
     sync()
-    output = capsys.readouterr().out.splitlines()
-    print(output)
+    output = capsys.readouterr().out
     assert os.path.exists("mock-fetch")
     with open("mock-fetch", "r") as f:
         mock_fetch = f.read().splitlines()
     assert mock_fetch[0] == "https://gerrit.example.org/mayhem"
     assert mock_fetch[1] == "refs/changes/*:refs/changes/*"
+
+    # The mocked show-ref reports change 1 (patchsets 1-3) and change 2
+    # (patchset 1). Change 1's current patchset has a Change-Id and is
+    # recorded in gerrit_changes; change 2's does not, so it is skipped.
+    assert "Skipped 1 change(s) with no Change-Id." in output
+    with GitGerritDB() as db:
+        with Cursor(db) as cursor:
+            cursor.execute(
+                "SELECT number, current_patchset, change_id FROM gerrit_changes"
+            )
+            changes = [tuple(row) for row in cursor.fetchall()]
+        with Cursor(db) as cursor:
+            cursor.execute(
+                "SELECT flags FROM commits WHERE commit_id = ?", (f"{4:040}",)
+            )
+            skipped_commit = cursor.fetchone()
+    assert changes == [(1, 3, "Ibc6dab9f4a99d693ea03891ed7222fed9a07a85a")]
+    # The skipped change's commit is still recorded and marked scanned.
+    assert skipped_commit["flags"] == 1

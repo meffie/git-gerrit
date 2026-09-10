@@ -32,7 +32,9 @@ def test_db_init__creates_tables(db):
     with Cursor(db) as cursor:
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
         names = [row['name'] for row in cursor.fetchall()]
-    assert len(names) != 0
+    assert "commits" in names
+    assert "gerrit_patchsets" in names
+    assert "gerrit_changes" in names
 
 
 def test_db_add_patchset__inserts_into_tables(db):
@@ -48,6 +50,26 @@ def test_db_add_patchset__inserts_into_tables(db):
         commit = cursor.fetchone()
         assert commit is not None
         assert commit["flags"] == 0
+
+
+def test_db_add_or_update_change__inserts_then_updates_row(db):
+    db.add_or_update_change(200, 1, "I200")
+    with Cursor(db) as cursor:
+        cursor.execute("SELECT * FROM gerrit_changes WHERE number=200")
+        rows = cursor.fetchall()
+    assert len(rows) == 1
+    assert rows[0]["current_patchset"] == 1
+    assert rows[0]["change_id"] == "I200"
+
+    # A second call for the same change number updates the existing row
+    # instead of inserting a duplicate.
+    db.add_or_update_change(200, 2, "I200-reworked")
+    with Cursor(db) as cursor:
+        cursor.execute("SELECT * FROM gerrit_changes WHERE number=200")
+        rows = cursor.fetchall()
+    assert len(rows) == 1
+    assert rows[0]["current_patchset"] == 2
+    assert rows[0]["change_id"] == "I200-reworked"
 
 
 def test_db_update_commit__updates_commit_row(db):

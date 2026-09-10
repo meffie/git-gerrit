@@ -35,6 +35,7 @@ def test_db_init__creates_tables(db):
     assert "commits" in names
     assert "gerrit_patchsets" in names
     assert "gerrit_changes" in names
+    assert "gerrit_duplicate_changes" in names
 
 
 def test_db_add_patchset__inserts_into_tables(db):
@@ -52,24 +53,85 @@ def test_db_add_patchset__inserts_into_tables(db):
         assert commit["flags"] == 0
 
 
-def test_db_add_or_update_change__inserts_then_updates_row(db):
-    db.add_or_update_change(200, 1, "I200")
+def _dup_rows(db):
     with Cursor(db) as cursor:
-        cursor.execute("SELECT * FROM gerrit_changes WHERE number=200")
-        rows = cursor.fetchall()
-    assert len(rows) == 1
-    assert rows[0]["current_patchset"] == 1
-    assert rows[0]["change_id"] == "I200"
+        cursor.execute(
+            "SELECT number, change_id, canonical_number "
+            "FROM gerrit_duplicate_changes ORDER BY number"
+        )
+        return [tuple(row) for row in cursor.fetchall()]
 
-    # A second call for the same change number updates the existing row
-    # instead of inserting a duplicate.
-    db.add_or_update_change(200, 2, "I200-reworked")
+
+def _change_rows(db):
     with Cursor(db) as cursor:
-        cursor.execute("SELECT * FROM gerrit_changes WHERE number=200")
-        rows = cursor.fetchall()
-    assert len(rows) == 1
-    assert rows[0]["current_patchset"] == 2
-    assert rows[0]["change_id"] == "I200-reworked"
+        cursor.execute(
+            "SELECT number, current_patchset, change_id "
+            "FROM gerrit_changes ORDER BY number"
+        )
+        return [tuple(row) for row in cursor.fetchall()]
+
+
+def test_db_record_change__inserts_and_updates_canonical(db):
+    assert db.record_change(200, 1, "I200") is True
+    assert _change_rows(db) == [(200, 1, "I200")]
+
+    # A rescan of the same change refreshes the patchset in place.
+    assert db.record_change(200, 2, "I200") is True
+    assert _change_rows(db) == [(200, 2, "I200")]
+    assert _dup_rows(db) == []
+
+
+def test_db_record_change__sidebars_higher_numbered_duplicate(db):
+    db.record_change(300, 1, "Ishared")
+    assert db.record_change(305, 1, "Ishared") is False
+
+    assert _change_rows(db) == [(300, 1, "Ishared")]
+    assert _dup_rows(db) == [(305, "Ishared", 300)]
+
+
+def test_db_record_change__lower_number_takes_over_as_canonical(db):
+    # Changes arrive newest-first, as git-gerrit-sync scans them.
+    db.record_change(305, 1, "Ishared")
+    db.record_change(303, 1, "Ishared")
+    db.record_change(300, 1, "Ishared")
+
+    assert _change_rows(db) == [(300, 1, "Ishared")]
+    assert _dup_rows(db) == [(303, "Ishared", 300), (305, "Ishared", 300)]
+
+
+def test_db_record_change__canonical_stable_when_scanned_oldest_first(db):
+    db.record_change(300, 1, "Ishared")
+    db.record_change(303, 1, "Ishared")
+    db.record_change(305, 1, "Ishared")
+
+    assert _change_rows(db) == [(300, 1, "Ishared")]
+    assert _dup_rows(db) == [(303, "Ishared", 300), (305, "Ishared", 300)]
+
+
+def test_db_record_change__is_idempotent_across_rescans(db):
+    for _ in range(2):
+        db.record_change(305, 1, "Ishared")
+        db.record_change(303, 2, "Ishared")
+        db.record_change(300, 3, "Ishared")
+
+    assert _change_rows(db) == [(300, 3, "Ishared")]
+    assert _dup_rows(db) == [(303, "Ishared", 300), (305, "Ishared", 300)]
+
+
+def test_db_get_change__returns_canonical_only(db):
+    db.record_change(300, 1, "Ishared")
+    db.record_change(305, 2, "Ishared")
+
+    assert db.get_change("Ishared")["number"] == 300
+    assert db.get_change("Imissing") is None
+
+
+def test_db_count_duplicate_changes(db):
+    db.record_change(300, 1, "Ishared")
+    db.record_change(305, 1, "Ishared")
+    db.record_change(400, 1, "Iunique")
+
+    assert db.count_duplicate_changes() == 1
 
 
 def test_db_update_commit__updates_commit_row(db):

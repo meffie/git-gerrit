@@ -517,7 +517,7 @@ def sync(limit=None):
                         # gerrit_changes row, which is keyed by Change-Id.
                         no_change_id += 1
                     else:
-                        db.add_or_update_change(number, current_patchset, change_id)
+                        db.record_change(number, current_patchset, change_id)
 
                     picked_from = git.cherry_picked_from(commit_id)
                     db.update_commit(commit_id, change_id, picked_from, 1)

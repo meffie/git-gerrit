@@ -113,21 +113,33 @@ def test_sync(capsys, mock_modules):
     assert mock_fetch[0] == "https://gerrit.example.org/mayhem"
     assert mock_fetch[1] == "refs/changes/*:refs/changes/*"
 
-    # The mocked show-ref reports change 1 (patchsets 1-3) and change 2
-    # (patchset 1). Change 1's current patchset has a Change-Id and is
-    # recorded in gerrit_changes; change 2's does not, so it is skipped.
-    assert "Skipped 1 change(s) with no Change-Id." in output
+    # The mocked show-ref reports three changes:
+    #   change 1 - current patchset (ps 3) has Change-Id Ibc6dab9f...
+    #   change 2 - current patchset has no Change-Id trailer
+    #   change 3 - current patchset reuses change 1's Change-Id
     with GitGerritDB() as db:
         with Cursor(db) as cursor:
             cursor.execute(
-                "SELECT number, current_patchset, change_id FROM gerrit_changes"
+                "SELECT number, current_patchset, change_id FROM gerrit_changes "
+                "ORDER BY number"
             )
             changes = [tuple(row) for row in cursor.fetchall()]
+        with Cursor(db) as cursor:
+            cursor.execute(
+                "SELECT number, canonical_number FROM gerrit_duplicate_changes"
+            )
+            duplicates = [tuple(row) for row in cursor.fetchall()]
         with Cursor(db) as cursor:
             cursor.execute(
                 "SELECT flags FROM commits WHERE commit_id = ?", (f"{4:040}",)
             )
             skipped_commit = cursor.fetchone()
-    assert changes == [(1, 3, "Ibc6dab9f4a99d693ea03891ed7222fed9a07a85a")]
+
+    cid = "Ibc6dab9f4a99d693ea03891ed7222fed9a07a85a"
+    # Change 1 is canonical (lowest number); change 3 is sidebarred as a
+    # duplicate; change 2 is skipped for want of a Change-Id.
+    assert changes == [(1, 3, cid)]
+    assert duplicates == [(3, 1)]
+    assert "Skipped 1 change(s) with no Change-Id." in output
     # The skipped change's commit is still recorded and marked scanned.
     assert skipped_commit["flags"] == 1

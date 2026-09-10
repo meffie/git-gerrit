@@ -39,6 +39,7 @@ class MockGitCommand(MockCommandBase):
                 f"{2:040} refs/changes/01/0001/2",
                 f"{3:040} refs/changes/01/0001/3",
                 f"{4:040} refs/changes/02/0002/1",
+                f"{5:040} refs/changes/03/0003/1",
             ]
         raise NotImplementedError(f"MockGitCommand: git {args}")
 

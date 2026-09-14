@@ -39,6 +39,7 @@ class MockGitCommand(MockCommandBase):
                 f"{2:040} refs/changes/01/0001/2",
                 f"{3:040} refs/changes/01/0001/3",
                 f"{4:040} refs/changes/02/0002/1",
+                f"{5:040} refs/changes/03/0003/1",
             ]
         raise NotImplementedError(f"MockGitCommand: git {args}")
 
@@ -73,11 +74,23 @@ class MockGitCommand(MockCommandBase):
         kwargs.pop("_iter", None)  # Remove the magic sh keyword.
         options = kwargs.copy()
         pretty = options.pop("pretty", "")
-        options.pop("max_count", None)  # ignore for now
+        # Options the mock accepts but does not act on: the canned log data
+        # is fixed, so ordering (reverse) and truncation (max-count) are not
+        # emulated. Real sh drops reverse=False before it reaches git.
+        options.pop("reverse", None)
+        options.pop("max_count", None)
+        options.pop("max-count", None)
 
-        if options is True:
-            # Check for unnhandled options.
+        if options:
+            # Fail on options the mock does not understand.
             raise NotImplementedError(f"MockGitCommand: git log {args} {kwargs}")
+
+        refname = args[0] if args else None
+
+        # The current patchset of change 2 (commit 00..04) was merged before
+        # gerrit required a Change-Id trailer.
+        if refname == f"{4:040}" and pretty == "%B":
+            pretty = "%B-no-change-id"
 
         try:
             log = self._log_test_data(pretty)
@@ -407,10 +420,6 @@ Reviewed-by: Bob <bob@example.com>
 Tested-by: Bob <bob@example.com>
 %%
 """,
-    "%(trailers:key=Change-Id)": """\
-Change-Id: I68fd140aab7e65bec1ac537d19de89f9d32443c1
-
-""",
     "%B": """\
 Foo bar baz
 
@@ -422,11 +431,19 @@ Reviewed-by: Charles <charles@example.com>
 Reviewed-by: Bob <bob@example.com>
 (cherry picked from commit 75a3a91f5086c011e91bf638e2cc8c03ee373266)
 
+FIXES 135591
+FIXES 135592
 Change-Id: Ibc6dab9f4a99d693ea03891ed7222fed9a07a85a
 Reviewed-on: https://gerrit.openafs.org/12345
 Reviewed-by: Alice <alice@example.com>
 Reviewed-by: Charles <charles@example.com>
 Reviewed-by: Bob <bob@example.com>
+
+""",
+    "%B-no-change-id": """\
+Revert "viced: avoid crash if missing volume header"
+
+This reverts commit 2b40e6d2abbf842e6823661b94cfa9aa833b9990
 
 """,
 }

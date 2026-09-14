@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Sine Nomine Associates
+# Copyright (c) 2025-2026 Sine Nomine Associates
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,7 @@ from git_gerrit.git import Git
 
 DATABASE = "git-gerrit.db"
 MAGIC = 0x67697467  # "gitg"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 MIGRATION_SCRIPTS = [
     """
     CREATE TABLE changes (
@@ -41,6 +41,39 @@ MIGRATION_SCRIPTS = [
         commit_flags INTEGER,
         FOREIGN KEY (commit_id) REFERENCES commits(change_commit_id)
     );
+    """,
+    """
+    ALTER TABLE changes RENAME TO gerrit_patchsets;
+    ALTER TABLE gerrit_patchsets RENAME COLUMN change_number TO number;
+    ALTER TABLE gerrit_patchsets RENAME COLUMN change_patchset TO patchset;
+    ALTER TABLE gerrit_patchsets RENAME COLUMN change_commit_id TO commit_id;
+
+    ALTER TABLE commits RENAME COLUMN commit_change_id TO change_id;
+    ALTER TABLE commits RENAME COLUMN commit_picked_from TO cherry_picked_from;
+    ALTER TABLE commits RENAME COLUMN commit_flags TO flags;
+
+    /* One canonical row per Change-Id. When several gerrit changes share a
+       Change-Id (a cherry-pick that reused it instead of generating a new
+       one), the lowest number is canonical and the rest are recorded in
+       gerrit_duplicate_changes. */
+    CREATE TABLE gerrit_changes (
+        number INTEGER PRIMARY KEY,
+        current_patchset INTEGER,
+        change_id TEXT NOT NULL UNIQUE,
+        merged_as TEXT  /* NULL if not merged */
+    );
+    CREATE TABLE gerrit_duplicate_changes (
+        number INTEGER PRIMARY KEY,        /* A non-canonical change number. */
+        change_id TEXT NOT NULL,           /* Its Change-Id. */
+        canonical_number INTEGER NOT NULL, /* The canonical change number. */
+        FOREIGN KEY (canonical_number) REFERENCES gerrit_changes(number)
+    );
+    CREATE INDEX gerrit_duplicate_changes_change_id
+        ON gerrit_duplicate_changes (change_id);
+
+    /* Rescan every commit message so the canonical/duplicate split is built
+       from the whole history, not just changes seen since the upgrade. */
+    UPDATE commits SET flags = 0;
     """,
 ]
 
@@ -163,9 +196,9 @@ class GitGerritDB:
             data = None
         return data
 
-    def add_change(self, number, patchset, commit_id):
+    def add_patchset(self, number, patchset, commit_id):
         """
-        Adds a new change to the database.
+        Adds a new patchset to the database.
 
         Args:
             number (int): The change number.
@@ -176,20 +209,127 @@ class GitGerritDB:
             cursor.execute(
                 """
                 INSERT OR IGNORE INTO commits
-                (commit_id, commit_flags)
+                (commit_id, flags)
                 VALUES (?, 0)
                 """,
                 (commit_id,),
             )
             cursor.execute(
                 """
-                INSERT OR IGNORE INTO changes
-                (change_number, change_patchset, change_commit_id)
+                INSERT OR IGNORE INTO gerrit_patchsets
+                (number, patchset, commit_id)
                 VALUES (?, ?, ?)
                 """,
                 (number, patchset, commit_id),
             )
             self._dirty = True
+
+    def record_change(self, number, current_patchset, change_id):
+        """
+        Records a change, keeping gerrit_changes to one row per Change-Id.
+
+        The canonical change for a Change-Id is the one with the lowest
+        number. Any other change numbers that carry the same Change-Id are
+        moved to gerrit_duplicate_changes.
+
+        Args:
+            number (int): The gerrit change number.
+            current_patchset (int): The most recent patchset number.
+            change_id (str): The gerrit Change-Id.
+
+        Returns:
+            bool: True if `number` is the canonical change, False if it was
+                recorded as a duplicate.
+        """
+        with Cursor(self) as cursor:
+            cursor.execute(
+                "SELECT number FROM gerrit_changes WHERE change_id = ?",
+                (change_id,),
+            )
+            row = cursor.fetchone()
+            canonical = row["number"] if row else None
+
+            if canonical == number:
+                # Rescan of the canonical change; just refresh the patchset.
+                cursor.execute(
+                    "UPDATE gerrit_changes SET current_patchset = ? "
+                    "WHERE number = ?",
+                    (current_patchset, number),
+                )
+                self._dirty = True
+                return True
+
+            # Forget any stale record of this number before re-recording it.
+            cursor.execute("DELETE FROM gerrit_changes WHERE number = ?", (number,))
+            cursor.execute(
+                "DELETE FROM gerrit_duplicate_changes WHERE number = ?", (number,)
+            )
+            self._dirty = True
+
+            if canonical is not None and number > canonical:
+                # A lower-numbered change is canonical; sidebar this one.
+                cursor.execute(
+                    "INSERT INTO gerrit_duplicate_changes "
+                    "(number, change_id, canonical_number) VALUES (?, ?, ?)",
+                    (number, change_id, canonical),
+                )
+                return False
+
+            # `number` becomes canonical: the Change-Id is new, or `number` is
+            # lower than the current canonical and takes it over. Demote the
+            # old canonical and re-point its duplicates.
+            demoted = []
+            if canonical is not None:
+                cursor.execute(
+                    "SELECT number FROM gerrit_duplicate_changes "
+                    "WHERE change_id = ?",
+                    (change_id,),
+                )
+                demoted = [r["number"] for r in cursor.fetchall()]
+                demoted.append(canonical)
+                cursor.execute(
+                    "DELETE FROM gerrit_duplicate_changes WHERE change_id = ?",
+                    (change_id,),
+                )
+                cursor.execute(
+                    "DELETE FROM gerrit_changes WHERE number = ?", (canonical,)
+                )
+            cursor.execute(
+                "INSERT INTO gerrit_changes "
+                "(number, current_patchset, change_id) VALUES (?, ?, ?)",
+                (number, current_patchset, change_id),
+            )
+            for dup in demoted:
+                cursor.execute(
+                    "INSERT INTO gerrit_duplicate_changes "
+                    "(number, change_id, canonical_number) VALUES (?, ?, ?)",
+                    (dup, change_id, number),
+                )
+            return True
+
+    def get_change(self, change_id):
+        """
+        Returns the canonical change for a Change-Id, or None.
+
+        Args:
+            change_id (str): The gerrit Change-Id.
+
+        Returns:
+            dict: The gerrit_changes row, or None if the Change-Id is unknown.
+        """
+        with Cursor(self) as cursor:
+            cursor.execute(
+                "SELECT number, current_patchset, change_id, merged_as "
+                "FROM gerrit_changes WHERE change_id = ?",
+                (change_id,),
+            )
+            return self._as_dict(cursor.fetchone())
+
+    def count_duplicate_changes(self):
+        """Returns the number of rows in gerrit_duplicate_changes."""
+        with Cursor(self) as cursor:
+            cursor.execute("SELECT COUNT(*) FROM gerrit_duplicate_changes")
+            return cursor.fetchone()[0]
 
     def update_commit(self, commit_id, change_id, picked_from, flags):
         """
@@ -205,7 +345,7 @@ class GitGerritDB:
             cursor.execute(
                 """
                 UPDATE commits
-                SET commit_change_id = ?, commit_picked_from = ?, commit_flags = ?
+                SET change_id = ?, cherry_picked_from = ?, flags = ?
                 WHERE commit_id == ?
                 """,
                 (change_id, picked_from, flags, commit_id),
@@ -214,13 +354,16 @@ class GitGerritDB:
 
     def get_current_patchsets(self, limit=None):
         """
-        Retrieves the current patchsets for all changes.
+        Retrieves the current patchset of every change.
+
+        Yields one row per change number: its highest-numbered patchset
+        joined with the commit details, ordered by change number descending.
 
         Args:
-            limit (int, optional): The maximum number of patchsets to retrieve.
+            limit (int, optional): The maximum number of changes to retrieve.
 
         Yields:
-            dict: A dictionary representing a patchset.
+            dict: A dictionary representing the current patchset of a change.
         """
         if self._dirty:
             self._conn.commit()
@@ -235,16 +378,16 @@ class GitGerritDB:
             cursor.execute(
                 f"""
                 SELECT
-                    ch.change_number AS number,
-                    MAX(ch.change_patchset) AS current_patchset,
-                    ch.change_commit_id AS commit_id,
-                    co.commit_change_id AS change_id,
-                    co.commit_picked_from AS cherry_picked_from,
-                    co.commit_flags AS flags
-                FROM changes AS ch
-                LEFT JOIN commits AS co ON co.commit_id = ch.change_commit_id
-                GROUP BY ch.change_number
-                ORDER BY ch.change_number DESC
+                    ps.number AS number,
+                    MAX(ps.patchset) AS current_patchset,
+                    ps.commit_id AS commit_id,
+                    co.change_id AS change_id,
+                    co.cherry_picked_from AS cherry_picked_from,
+                    co.flags AS flags
+                FROM gerrit_patchsets AS ps
+                LEFT JOIN commits AS co ON co.commit_id = ps.commit_id
+                GROUP BY ps.number
+                ORDER BY ps.number DESC
                 {limit_clause}
                 """
             )
@@ -269,17 +412,17 @@ class GitGerritDB:
             cursor.execute(
                 """
                 SELECT
-                    ch.change_number AS number,
-                    MAX(ch.change_patchset) AS current_patchset,
-                    ch.change_commit_id AS commit_id,
-                    co.commit_change_id AS change_id,
-                    co.commit_picked_from AS cherry_picked_from,
-                    co.commit_flags AS flags
-                FROM changes AS ch
-                LEFT JOIN commits AS co ON co.commit_id = ch.change_commit_id
-                WHERE ch.change_number = ?
-                GROUP BY ch.change_number
-                ORDER BY ch.change_number DESC
+                    ps.number AS number,
+                    MAX(ps.patchset) AS current_patchset,
+                    ps.commit_id AS commit_id,
+                    co.change_id AS change_id,
+                    co.cherry_picked_from AS cherry_picked_from,
+                    co.flags AS flags
+                FROM gerrit_patchsets AS ps
+                LEFT JOIN commits AS co ON co.commit_id = ps.commit_id
+                WHERE ps.number = ?
+                GROUP BY ps.number
+                ORDER BY ps.number DESC
                 LIMIT 1
                 """,
                 (number,),
@@ -307,15 +450,15 @@ class GitGerritDB:
             cursor.execute(
                 """
                 SELECT
-                    ch.change_number AS number,
-                    ch.change_patchset AS patchset,
-                    ch.change_commit_id AS commit_id,
-                    co.commit_change_id AS change_id,
-                    co.commit_picked_from AS cherry_picked_from,
-                    co.commit_flags AS flags
-                FROM changes AS ch
-                LEFT JOIN commits AS co ON co.commit_id = ch.change_commit_id
-                WHERE ch.change_commit_id = ?
+                    ps.number AS number,
+                    ps.patchset AS patchset,
+                    ps.commit_id AS commit_id,
+                    co.change_id AS change_id,
+                    co.cherry_picked_from AS cherry_picked_from,
+                    co.flags AS flags
+                FROM gerrit_patchsets AS ps
+                LEFT JOIN commits AS co ON co.commit_id = ps.commit_id
+                WHERE ps.commit_id = ?
                 LIMIT 1
                 """,
                 (commit_id,),
@@ -345,11 +488,11 @@ class GitGerritDB:
                 """
                 SELECT
                     commit_id,
-                    commit_change_id,
-                    commit_picked_from,
-                    commit_flags
+                    change_id,
+                    cherry_picked_from,
+                    flags
                 FROM commits
-                WHERE commit_picked_from = ?
+                WHERE cherry_picked_from = ?
                 """,
                 (commit_picked_from,),
             )

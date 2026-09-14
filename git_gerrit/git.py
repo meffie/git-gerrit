@@ -249,10 +249,13 @@ class Git:
             return False
 
     def change_id(self, sha1):
+        # Scan the raw commit message rather than git's %(trailers) parser.
+        # The trailer parser rejects the whole footer block when it contains
+        # non-trailer lines (e.g. the "FIXES 135591" convention used by
+        # OpenAFS), which would hide an otherwise valid Change-Id.
         change_id = None
-        format_ = "%(trailers:key=Change-Id)"
-        for line in self.log(sha1, max_count=1, pretty=format_):
-            m = re.match(r'Change-Id: (I[0-9a-fA-F]+)', line)
+        for line in self.log(sha1, max_count=1, pretty="%B"):
+            m = re.match(r'^Change-Id: (I[0-9a-fA-F]+)', line)
             if m:
                 change_id = m.group(1)
         return change_id

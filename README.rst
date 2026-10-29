@@ -7,8 +7,6 @@ with the **pygerrit2** package to access the Gerrit REST API.
 
 .. _Gerrit code review system: https://www.gerritcodereview.com/
 
-**git-gerrit** is requires Python 3.9 or later.
-
 Commands
 ========
 

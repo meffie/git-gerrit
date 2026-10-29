@@ -460,7 +460,10 @@ def main_git_gerrit_number(argv=None):
             for p in change['cherry_picked_to']:
                 print(p or "")
         elif args.checkout:
-            print(git.git.checkout(change['commit_id'], detach=True))
+            number = change['number']
+            patchset = change['current_patchset']
+            print(f"checking out {number},{patchset}")
+            git.checkout(change['commit_id'])
         elif args.show:
             print(git.git.show(change['commit_id']))
         else:

@@ -33,6 +33,8 @@ class MockGitCommand(MockCommandBase):
         if args == ('show-ref', '--quiet', 'refs/heads/branch-is-missing'):
             sh.ErrorReturnCode.exit_code = 1
             raise sh.ErrorReturnCode("git show-ref", b"", b"")
+        if args[:3] == ('-c', 'advice.detachedHead=false', 'checkout'):
+            return self.checkout(*args[3:], **kwargs)
         if args == ('show-ref',):
             return [
                 f"{1:040} refs/changes/01/0001/1",

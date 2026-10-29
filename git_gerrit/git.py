@@ -22,6 +22,7 @@
 import os
 import re
 import sh
+import sys
 
 import urllib.request
 
@@ -186,7 +187,17 @@ class Git:
 
     def checkout(self, refname):
         """Run git checkout to checkout a change."""
-        self.git.checkout(refname)
+        try:
+            self.git(
+                "-c",
+                "advice.detachedHead=false",
+                "checkout",
+                refname,
+                _out=sys.stdout,
+                _err=sys.stderr,
+            )
+        except sh.ErrorReturnCode as e:
+            raise GitGerritError(f"Command failed: git checkout: {e.exit_code}")
 
     def log(self, refname=None, **options):
         """Run git log to show changes."""

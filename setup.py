@@ -19,6 +19,7 @@ setup(
     version=get_version(),
     description='Gerrit review system command line tools.',
     long_description=open('README.rst').read(),
+    long_description_content_type='text/x-rst',
     author='Michael Meffie',
     author_email='mmeffie@sinenomine.net',
     license='BSD-2-Clause',

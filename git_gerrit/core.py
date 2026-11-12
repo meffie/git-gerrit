@@ -389,7 +389,10 @@ def query(search, limit=None, details=False, **options):
         params = urllib.parse.urlencode(params)
 
         # Retrieve next batch.
-        for change in gerrit.get(f"/changes/?{params}"):
+        changes = gerrit.get(f"/changes/?{params}")
+        if not changes:
+            break  # empty
+        for change in changes:
             start += 1
             more_changes = change.get('_more_changes', False)
             change = _flatten_change(change, host, remote)

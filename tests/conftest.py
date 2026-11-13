@@ -179,6 +179,29 @@ def mock_pygerrit2(monkeypatch, change_test_data):
 
 
 @pytest.fixture
+def mock_gerrit_batches(monkeypatch, mock_modules):
+    """Fake gerrit to return the given query batches in order.
+
+    Fail instead of hanging if query() asks for more batches than given.
+    """
+
+    def setup(batches):
+        batches = list(batches)
+        endpoints = []
+
+        def get(self, endpoint, return_response=False, **kwargs):
+            endpoints.append(endpoint)
+            if not batches:
+                raise AssertionError(f"Unexpected gerrit request: {endpoint}")
+            return batches.pop(0)
+
+        monkeypatch.setattr(git_gerrit.core.pygerrit2.GerritRestAPI, "get", get)
+        return endpoints
+
+    return setup
+
+
+@pytest.fixture
 def mock_urlrequest(monkeypatch):
 
     def urlretrieve(url, path, reporthook=None):

@@ -31,6 +31,56 @@ def test_query(mock_modules):
     assert "details" not in change
 
 
+def make_change(change_test_data, number, more_changes=False):
+    change = change_test_data("12345")
+    change["_number"] = number
+    if more_changes:
+        change["_more_changes"] = True
+    return change
+
+
+def test_query__empty(mock_gerrit_batches):
+    endpoints = mock_gerrit_batches([[]])
+    changes = list(query("12345"))
+    assert changes == []
+    assert len(endpoints) == 1
+
+
+def test_query__multiple_batches(mock_gerrit_batches, change_test_data):
+    endpoints = mock_gerrit_batches(
+        [
+            [
+                make_change(change_test_data, 1),
+                make_change(change_test_data, 2, more_changes=True),
+            ],
+            [
+                make_change(change_test_data, 3),
+            ],
+        ]
+    )
+    changes = list(query("status:open"))
+    assert [c["number"] for c in changes] == [1, 2, 3]
+    assert len(endpoints) == 2
+    assert "S=" not in endpoints[0]
+    assert "S=2" in endpoints[1]
+
+
+def test_query__batch_empty(mock_gerrit_batches, change_test_data):
+    endpoints = mock_gerrit_batches(
+        [
+            [
+                make_change(change_test_data, 1),
+                make_change(change_test_data, 2, more_changes=True),
+            ],
+            [],
+        ]
+    )
+    changes = list(query("status:open"))
+    assert [c["number"] for c in changes] == [1, 2]
+    assert len(endpoints) == 2
+    assert "S=2" in endpoints[1]
+
+
 def test_fetch__without_branch(capsys, mock_modules):
     fetch(12345)
     output = capsys.readouterr().out.splitlines()

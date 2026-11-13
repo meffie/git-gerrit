@@ -391,17 +391,18 @@ def query(search, limit=None, details=False, **options):
         # Retrieve next batch.
         changes = gerrit.get(f"/changes/?{params}")
         if not changes:
-            break  # empty
-        for change in changes:
-            start += 1
-            more_changes = change.get('_more_changes', False)
-            change = _flatten_change(change, host, remote)
-            if details:
-                change_id = change['change_id']
-                change['_detail'] = gerrit.get(f"/changes/{change_id}/detail")
-            yield change
-            if limit and start >= limit:
-                more_changes = False
+            more_changes = False
+        else:
+            for change in changes:
+                start += 1
+                more_changes = change.get('_more_changes', False)
+                change = _flatten_change(change, host, remote)
+                if details:
+                    change_id = change['change_id']
+                    change['_detail'] = gerrit.get(f"/changes/{change_id}/detail")
+                yield change
+                if limit and start >= limit:
+                    more_changes = False
 
 
 def update(
